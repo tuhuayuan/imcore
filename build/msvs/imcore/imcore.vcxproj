@@ -1,0 +1,127 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{58E181FC-403E-4CC6-AD0D-9900BA0F1D23}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>imcore</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_WARNINGS;IMCORE_EXPORTS;XML_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..\..\src;..\..\..\third_party\expat\include;..\..\..\third_party\libevent2\include;..\..\..\third_party\openssl\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <CompileAs>Default</CompileAs>
+      <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>..\..\..\third_party\expat\lib\Debug;..\..\..\third_party\libevent2\lib\Debug;..\..\..\third_party\openssl\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>libexpatMD.lib;libeventMD.lib;libeay32.lib;ssleay32.lib;Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;IMCORE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\src\common.h" />
+    <ClInclude Include="..\..\..\src\imcore-inl.h" />
+    <ClInclude Include="..\..\..\src\imcore-thread.h" />
+    <ClInclude Include="..\..\..\src\imcore.h" />
+    <ClInclude Include="..\..\..\src\list.h" />
+    <ClInclude Include="..\..\..\src\md5.h" />
+    <ClInclude Include="..\..\..\src\media-upload.h" />
+    <ClInclude Include="..\..\..\src\media.h" />
+    <ClInclude Include="..\..\..\src\mm.h" />
+    <ClInclude Include="..\..\..\src\random.h" />
+    <ClInclude Include="..\..\..\src\sock.h" />
+    <ClInclude Include="..\..\..\src\pthread-win32.h" />
+    <ClInclude Include="..\..\..\src\xmpp-hash.h" />
+    <ClInclude Include="..\..\..\src\xmpp-inl.h" />
+    <ClInclude Include="..\..\..\src\xmpp-parser.h" />
+    <ClInclude Include="..\..\..\src\xmpp-sasl.h" />
+    <ClInclude Include="..\..\..\src\xmpp.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\src\imcore.c" />
+    <ClCompile Include="..\..\..\src\imcore-thread.c" />
+    <ClCompile Include="..\..\..\src\md5.c" />
+    <ClCompile Include="..\..\..\src\mm.c" />
+    <ClCompile Include="..\..\..\src\random.c" />
+    <ClCompile Include="..\..\..\src\sock.c" />
+    <ClCompile Include="..\..\..\src\pthread-win32.c" />
+    <ClCompile Include="..\..\..\src\xmpp-auth.c" />
+    <ClCompile Include="..\..\..\src\xmpp-conn.c" />
+    <ClCompile Include="..\..\..\src\xmpp-ctx.c" />
+    <ClCompile Include="..\..\..\src\xmpp-handler.c" />
+    <ClCompile Include="..\..\..\src\xmpp-hash.c" />
+    <ClCompile Include="..\..\..\src\xmpp-jid.c" />
+    <ClCompile Include="..\..\..\src\xmpp-loop.c" />
+    <ClCompile Include="..\..\..\src\xmpp-parser-expat.c" />
+    <ClCompile Include="..\..\..\src\xmpp-sasl.c" />
+    <ClCompile Include="..\..\..\src\xmpp-stanza.c" />
+    <ClCompile Include="..\..\..\src\xmpp-util.c" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

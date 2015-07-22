@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.21005.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "imcore", "imcore.vcxproj", "{58E181FC-403E-4CC6-AD0D-9900BA0F1D23}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test_ctx", "..\test_ctx\test_ctx.vcxproj", "{A7DA0988-9765-4380-8102-625A000BBA6E}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test_libevent_openssl", "..\test_libevent_openssl\test_libevent_openssl.vcxproj", "{1432F69F-E2B2-49F3-8465-A01D950771C2}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{58E181FC-403E-4CC6-AD0D-9900BA0F1D23}.Debug|Win32.ActiveCfg = Debug|Win32
+		{58E181FC-403E-4CC6-AD0D-9900BA0F1D23}.Debug|Win32.Build.0 = Debug|Win32
+		{58E181FC-403E-4CC6-AD0D-9900BA0F1D23}.Release|Win32.ActiveCfg = Release|Win32
+		{58E181FC-403E-4CC6-AD0D-9900BA0F1D23}.Release|Win32.Build.0 = Release|Win32
+		{A7DA0988-9765-4380-8102-625A000BBA6E}.Debug|Win32.ActiveCfg = Debug|Win32
+		{A7DA0988-9765-4380-8102-625A000BBA6E}.Debug|Win32.Build.0 = Debug|Win32
+		{A7DA0988-9765-4380-8102-625A000BBA6E}.Release|Win32.ActiveCfg = Release|Win32
+		{A7DA0988-9765-4380-8102-625A000BBA6E}.Release|Win32.Build.0 = Release|Win32
+		{1432F69F-E2B2-49F3-8465-A01D950771C2}.Debug|Win32.ActiveCfg = Debug|Win32
+		{1432F69F-E2B2-49F3-8465-A01D950771C2}.Debug|Win32.Build.0 = Debug|Win32
+		{1432F69F-E2B2-49F3-8465-A01D950771C2}.Release|Win32.ActiveCfg = Release|Win32
+		{1432F69F-E2B2-49F3-8465-A01D950771C2}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
