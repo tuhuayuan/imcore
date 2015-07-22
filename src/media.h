@@ -1,0 +1,10 @@
+/*
+* media.h
+* Ã½ÌåÄ£¿é
+*/
+#ifndef _MEDIA_ALL_H
+#define _MEDIA_ALL_H
+
+
+
+#endif // _MEDIA_ALL_H
