@@ -1,0 +1,2 @@
+# imcore
+Another xmpp client.
