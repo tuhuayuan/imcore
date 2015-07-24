@@ -59,8 +59,8 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>..\..\..\third_party\expat\lib\Debug;..\..\..\third_party\libevent2\lib\Debug;..\..\..\third_party\openssl\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>libexpatMD.lib;libeventMD.lib;libeay32.lib;ssleay32.lib;Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\..\..\third_party\expat\lib\Debug;..\..\..\third_party\libevent2\;..\..\..\third_party\openssl\lib\;..\..\..\build\msvs\imcore\Debug;..\..\..\third_party\libiconv\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>libexpat.lib;libevent_core.lib;libevent_extras.lib;libevent_openssl.lib;libeay32.lib;ssleay32.lib;Ws2_32.lib;libiconv.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

@@ -7,8 +7,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "imcore", "imcore.vcxproj", 
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test_ctx", "..\test_ctx\test_ctx.vcxproj", "{A7DA0988-9765-4380-8102-625A000BBA6E}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test_libevent_openssl", "..\test_libevent_openssl\test_libevent_openssl.vcxproj", "{1432F69F-E2B2-49F3-8465-A01D950771C2}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -23,10 +21,6 @@ Global
 		{A7DA0988-9765-4380-8102-625A000BBA6E}.Debug|Win32.Build.0 = Debug|Win32
 		{A7DA0988-9765-4380-8102-625A000BBA6E}.Release|Win32.ActiveCfg = Release|Win32
 		{A7DA0988-9765-4380-8102-625A000BBA6E}.Release|Win32.Build.0 = Release|Win32
-		{1432F69F-E2B2-49F3-8465-A01D950771C2}.Debug|Win32.ActiveCfg = Debug|Win32
-		{1432F69F-E2B2-49F3-8465-A01D950771C2}.Debug|Win32.Build.0 = Debug|Win32
-		{1432F69F-E2B2-49F3-8465-A01D950771C2}.Release|Win32.ActiveCfg = Release|Win32
-		{1432F69F-E2B2-49F3-8465-A01D950771C2}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
