@@ -164,9 +164,10 @@ static void _end_element(void *userdata, const XML_Char *name)
 // expat回调
 static void _characters(void *userdata, const XML_Char *s, int len)
 {
-    parser_t *parser = (parser_t *)userdata;
+    parser_t *parser = (parser_t*)userdata;
     xmpp_stanza_t *stanza;
 
+    // 不应该在顶层出现text
     if (parser->depth < 2) {
         PARSER_ERROR_RETURN(parser->conn);
     }
@@ -175,7 +176,7 @@ static void _characters(void *userdata, const XML_Char *s, int len)
     if (!stanza) {
         PARSER_ERROR_RETURN(parser->conn);
     }
-    xmpp_stanza_set_text_with_size(stanza, s, len);
+    xmpp_stanza_set_text_safe(stanza, s, len);
 
     xmpp_stanza_add_child(parser->stanza, stanza);
     xmpp_stanza_release(stanza);

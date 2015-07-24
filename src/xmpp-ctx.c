@@ -34,29 +34,6 @@ void xmpp_shutdown(void)
 
 }
 
-static void *_malloc(const size_t size, void *userdata)
-{
-    return malloc(size);
-}
-
-static void _free(void *p, void *userdata)
-{
-    free(p);
-}
-
-static void *_realloc(void *p, size_t size, void * const userdata)
-{
-    return realloc(p, size);
-}
-
-// 内存管理对象
-static xmpp_mem_t xmpp_default_mem = {
-    _malloc,
-    _free,
-    _realloc,
-    NULL
-};
-
 // 日志等级
 static const char * const _xmpp_log_level_name[4] = {"DEBUG", "INFO", "WARN", "ERROR"};
 static const xmpp_log_level_t _xmpp_default_logger_levels[] = {XMPP_LEVEL_DEBUG,
@@ -88,22 +65,6 @@ xmpp_log_t *xmpp_get_default_logger(xmpp_log_level_t level)
 }
 static xmpp_log_t xmpp_default_log = { NULL, NULL };
 
-
-void *xmpp_alloc(const xmpp_ctx_t *ctx, size_t size)
-{
-    return ctx->mem->alloc(size, ctx->mem->userdata);
-}
-
-void xmpp_free(const xmpp_ctx_t *ctx, void *p)
-{
-    ctx->mem->free(p, ctx->mem->userdata);
-}
-
-void *xmpp_realloc(const xmpp_ctx_t *ctx, void *p, size_t size)
-{
-    return ctx->mem->realloc(p, size, ctx->mem->userdata);
-}
-
 void xmpp_log(const xmpp_ctx_t *ctx, xmpp_log_level_t level, const char *area, const char *fmt,
               va_list ap)
 {
@@ -115,7 +76,7 @@ void xmpp_log(const xmpp_ctx_t *ctx, xmpp_log_level_t level, const char *area, c
     va_copy(copy, ap);
     ret = imcore_vsnprintf(smbuf, sizeof(smbuf), fmt, ap);
     if (ret >= (int)sizeof(smbuf)) {
-        buf = (char *)xmpp_alloc(ctx, ret + 1);
+        buf = (char*)xmpp_alloc((void*)ctx, ret + 1);
         if (!buf) {
             buf = NULL;
             xmpp_error(ctx, "log", "Failed allocating memory for log message.");
@@ -180,21 +141,12 @@ void xmpp_debug(const xmpp_ctx_t *ctx, const char *area, const char *fmt, ...)
 }
 
 
-xmpp_ctx_t *xmpp_ctx_new(const xmpp_mem_t *mem, const xmpp_log_t *log)
+xmpp_ctx_t *xmpp_ctx_new(const xmpp_log_t *log)
 {
     xmpp_ctx_t *ctx = NULL;
-
-    if (mem == NULL)
-        ctx = xmpp_default_mem.alloc(sizeof(xmpp_ctx_t), NULL);
-    else
-        ctx = mem->alloc(sizeof(xmpp_ctx_t), mem->userdata);
+    ctx = safe_mem_malloc(sizeof(xmpp_ctx_t), NULL);
 
     if (ctx != NULL) {
-        if (mem != NULL)
-            ctx->mem = mem;
-        else
-            ctx->mem = &xmpp_default_mem;
-
         if (log == NULL)
             ctx->log = &xmpp_default_log;
         else

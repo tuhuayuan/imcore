@@ -58,7 +58,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>..\..\..\third_party\expat\lib\Debug;..\..\..\third_party\libevent2\;..\..\..\third_party\openssl\lib\;E:\projects\imcore\build\msvs\imcore\Debug;..\..\..\third_party\libiconv\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\third_party\expat\lib\Debug;..\..\..\third_party\libevent2\;..\..\..\third_party\openssl\lib\;..\..\..\build\msvs\imcore\Debug;..\..\..\third_party\libiconv\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>imcore.lib;libexpat.lib;libevent_core.lib;libevent_extras.lib;libevent_openssl.lib;libeay32.lib;ssleay32.lib;Ws2_32.lib;libiconv.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>

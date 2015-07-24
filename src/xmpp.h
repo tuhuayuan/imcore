@@ -2,6 +2,7 @@
 #define __IMCORE_XMPP_H__
 
 #include <stdio.h>
+#include "imcore-thread.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,16 +33,6 @@ extern "C" {
 void xmpp_initialize(void);
 void xmpp_shutdown(void);
 
-// 内存管理
-typedef struct _xmpp_mem_t xmpp_mem_t;
-struct _xmpp_mem_t {
-    void *(*alloc)(size_t size, void *userdata);
-    void (*free)(void *p, void *userdata);
-    void *(*realloc)(void *p, size_t size, void *userdata);
-    void *userdata;
-};
-
-
 // 日志等级
 typedef enum {
     XMPP_LEVEL_DEBUG,
@@ -64,7 +55,7 @@ xmpp_log_t *xmpp_get_default_logger(xmpp_log_level_t level);
 
 // 上下文对象
 typedef struct _xmpp_ctx_t xmpp_ctx_t;
-xmpp_ctx_t *xmpp_ctx_new(const xmpp_mem_t *mem, const xmpp_log_t *log);
+xmpp_ctx_t *xmpp_ctx_new(const xmpp_log_t *log);
 void xmpp_ctx_free(xmpp_ctx_t *ctx);
 
 //连接类型
@@ -140,7 +131,7 @@ typedef void(*xmpp_conn_handler)(xmpp_conn_t *conn,
                                  xmpp_conn_event_t state, int error,
                                  xmpp_stream_error_t *stream_error,
                                  void *userdata);
-                                 
+
 // 连接管理
 int xmpp_connect_client(xmpp_conn_t *conn,
                         const char *altdomain,
@@ -190,24 +181,20 @@ xmpp_stanza_t *xmpp_stanza_get_children(xmpp_stanza_t *stanza);
 xmpp_stanza_t *xmpp_stanza_get_child_by_name(xmpp_stanza_t *stanza, const char *name);
 xmpp_stanza_t *xmpp_stanza_get_child_by_ns(xmpp_stanza_t *stanza, const char *ns);
 xmpp_stanza_t *xmpp_stanza_get_next(xmpp_stanza_t *stanza);
-char *xmpp_stanza_get_attribute(xmpp_stanza_t *stanza, const char *name);
-char * xmpp_stanza_get_ns(xmpp_stanza_t *stanza);
-char *xmpp_stanza_get_text(xmpp_stanza_t *stanza);
+char *xmpp_stanza_get_attribute_ptr(xmpp_stanza_t *stanza, const char *name);
+char *xmpp_stanza_get_ns_ptr(xmpp_stanza_t *stanza);
 char *xmpp_stanza_get_text_ptr(xmpp_stanza_t *stanza);
-char *xmpp_stanza_get_name(xmpp_stanza_t *stanza);
+char *xmpp_stanza_get_name_ptr(xmpp_stanza_t *stanza);
 int xmpp_stanza_add_child(xmpp_stanza_t *stanza, xmpp_stanza_t *child);
 int xmpp_stanza_set_ns(xmpp_stanza_t *stanza, const char *ns);
 int xmpp_stanza_set_attribute(xmpp_stanza_t *stanza, const char *key, const char *value);
 int xmpp_stanza_set_name(xmpp_stanza_t *stanza, const char *name);
 int xmpp_stanza_set_text(xmpp_stanza_t *stanza, const char *text);
-int xmpp_stanza_set_text_with_size(xmpp_stanza_t *stanza, const char *text, size_t size);
-char *xmpp_stanza_get_type(xmpp_stanza_t *stanza);
-char *xmpp_stanza_get_id(xmpp_stanza_t *stanza);
+int xmpp_stanza_set_text_safe(xmpp_stanza_t *stanza, const char *text, size_t size);
+char *xmpp_stanza_get_type_ptr(xmpp_stanza_t *stanza);
+char *xmpp_stanza_get_id_ptr(xmpp_stanza_t *stanza);
 int xmpp_stanza_set_id(xmpp_stanza_t *stanza, const char *id);
 int xmpp_stanza_set_type(xmpp_stanza_t *stanza, const char *type);
-
-// 释放上下文分配的内存
-void xmpp_free(const xmpp_ctx_t *ctx, void *p);
 
 // 循环控制
 void xmpp_run_once(xmpp_ctx_t *ctx, unsigned long timeout);

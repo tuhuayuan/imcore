@@ -34,6 +34,14 @@ typedef enum {
     IM_STATE_CLOSED,                // 连接关闭
 } im_state;
 
+
+// 初始化库
+IMCORE_API
+bool im_init();
+IMCORE_API
+void im_destroy();
+
+
 // 会话句柄
 typedef struct im_session im_session_t;
 

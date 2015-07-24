@@ -9,7 +9,8 @@ char *xmpp_strdup(const xmpp_ctx_t *ctx, const char *s)
     char *copy;
 
     len = strlen(s);
-    copy = xmpp_alloc(ctx, len + 1);
+    copy = xmpp_alloc((void*)ctx, len + 1);
+
     if (!copy) {
         xmpp_error(ctx, "xmpp", "failed to allocate required memory");
         return NULL;
@@ -19,3 +20,7 @@ char *xmpp_strdup(const xmpp_ctx_t *ctx, const char *s)
     return copy;
 }
 
+void util_hash_free(const xmpp_ctx_t* const ctx, void* p)
+{
+    xmpp_free(ctx, p);
+}

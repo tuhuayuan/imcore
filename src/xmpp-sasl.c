@@ -67,7 +67,7 @@ static hash_t *_parse_digest_challenge(xmpp_ctx_t *ctx, const char *msg)
         xmpp_error(ctx, "SASL", "couldn't Base64 decode challenge!");
         return NULL;
     }
-    result = hash_new(ctx, 10, xmpp_free);
+    result = hash_new(ctx, 10, util_hash_free);
     if (result != NULL) {
         s = text;
         while (*s != '\0') {
@@ -166,7 +166,7 @@ static char *_add_key(xmpp_ctx_t *ctx, hash_t *table, const char *key,
     }
     if (quote)
         xmpp_free(ctx, (char *)qvalue);
-        
+
     return buf;
 }
 
@@ -187,11 +187,11 @@ char *sasl_digest_md5(xmpp_ctx_t *ctx, const char *challenge,
     Hex( KD( HEX(MD5(A1)),
     nonce ':' nc ':' cnonce ':' qop ':' HEX(MD5(A2))
     ))
-    
+
        where KD(k, s) = MD5(k ':' s),
     A1 = MD5( node ':' realm ':' password ) ':' nonce ':' cnonce
     A2 = "AUTHENTICATE" ':' "xmpp/" domain
-    
+
        If there is an authzid it is ':'-appended to A1 */
     /* parse the challenge */
     table = _parse_digest_challenge(ctx, challenge);

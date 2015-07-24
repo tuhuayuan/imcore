@@ -44,7 +44,7 @@ void handler_fire_stanza(xmpp_conn_t *conn, xmpp_stanza_t *stanza)
     struct list_head *pos, *tmp;
 
     // 先处理id
-    id = xmpp_stanza_get_id(stanza);
+    id = xmpp_stanza_get_id_ptr(stanza);
     if (id) {
         item = (xmpp_handlist_t*)hash_get(conn->id_handlers, id);
         if (item) {
@@ -63,9 +63,9 @@ void handler_fire_stanza(xmpp_conn_t *conn, xmpp_stanza_t *stanza)
     }
 
     // handler派发信息, 回头会遍历并且匹配
-    ns = xmpp_stanza_get_ns(stanza);
-    name = xmpp_stanza_get_name(stanza);
-    type = xmpp_stanza_get_type(stanza);
+    ns = xmpp_stanza_get_ns_ptr(stanza);
+    name = xmpp_stanza_get_name_ptr(stanza);
+    type = xmpp_stanza_get_type_ptr(stanza);
 
     // 普通handler
     item = &conn->handlers;

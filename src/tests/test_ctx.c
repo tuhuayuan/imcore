@@ -58,8 +58,9 @@ bool process_cmd(const char *cmd, int argc, char **argv, void* userdata)
         // # message $who $message
         cmd_send_msg(conn, argv[0], argv[1]);
 
-    } else if (strncmp("image", cmd, 5) == 0 && argc == 3) {
+    } else if (strncmp("raw", cmd, 3) == 0 && argc == 1) {
         // # image $who $fullfilepath $imagetype
+        xmpp_send_raw(conn, argv[0], strlen(argv[0]));
 
     } else if (strncmp("voice", cmd, 5) == 0 && argc == 4) {
         // # voice $who $fullfilepath $container $codec
@@ -176,7 +177,7 @@ void process_input(void *userdata)
                     break;
                 }
                 cur++;
-                if (cur - read >= read_len) {
+                if (cur - read >= (int)read_len) {
                     break;
                 }
             } // while(1) Ω‚Œˆ√¸¡Ó
@@ -290,7 +291,7 @@ int main(int argc, char **argv)
 
 
     log = xmpp_get_default_logger(XMPP_LEVEL_DEBUG);
-    ctx = xmpp_ctx_new(NULL, log);
+    ctx = xmpp_ctx_new(log);
 
     conn = xmpp_conn_new(ctx);
 
@@ -313,10 +314,10 @@ int main(int argc, char **argv)
     xmpp_ctx_free(ctx);
     xmpp_shutdown();
 
-    //free(jid);
-    //free(pass);
+    safe_mem_free(jid);
+    safe_mem_free(pass);
     if (host) {
-        //free(host);
+        safe_mem_free(host);
     }
 
     safe_mem_check(memcb, NULL);

@@ -7,30 +7,30 @@ typedef struct im_text_msg {
     im_msg_t common_info;             // 基础消息信息
     char *txt;                        // 文本信息
     char *type;
-    
+
 } im_text_msg_t;
 
 static xmpp_stanza_t *txt_msg_to_stanza(im_text_msg_t *txt_msg, xmpp_conn_t *conn)
 {
     xmpp_ctx_t *ctx = xmpp_conn_get_context(conn);
     xmpp_stanza_t *msg_stanza = xmpp_stanza_new(ctx);
-    
+
     xmpp_stanza_set_name(msg_stanza, "message");
     xmpp_stanza_set_type(msg_stanza, txt_msg->type);
-    
+
     xmpp_stanza_set_attribute(msg_stanza, "to", txt_msg->common_info.to);
-    
+
     xmpp_stanza_t *msg_body = xmpp_stanza_new(ctx);
     xmpp_stanza_set_name(msg_body, "body");
-    
+
     xmpp_stanza_t *text = xmpp_stanza_new(ctx);
     xmpp_stanza_set_text(text, txt_msg->txt);
-    
+
     xmpp_stanza_add_child(msg_body, text);
     xmpp_stanza_release(text);
     xmpp_stanza_add_child(msg_stanza, msg_body);
     xmpp_stanza_release(msg_body);
-    
+
     return msg_stanza;
 }
 
@@ -58,15 +58,15 @@ void cmd_send_msg(xmpp_conn_t *conn, char *to, char *msg)
     im_text_msg_t txt_msg;
     txt_msg.common_info.to = to;
     txt_msg.type = "chat";
-    
-    
+
+
     size_t msg_len = strlen(msg);
     char *buff = malloc(msg_len * 2);
-    
+
     if (simple_convert("GBK", "UTF-8", msg, msg_len, buff, msg_len * 2) < 0) {
         perror("GBK=>UTF8 error");
     }
-    
+
     txt_msg.txt = buff;
     xmpp_stanza_t *msg_stanza = txt_msg_to_stanza(&txt_msg, conn);
     if (msg_stanza != NULL) {
@@ -78,28 +78,40 @@ void cmd_send_msg(xmpp_conn_t *conn, char *to, char *msg)
 
 int handle_txt_msg(xmpp_conn_t *conn, xmpp_stanza_t *stanza, void *userdata)
 {
-    char *intext;
+    char *intext, *type;
     xmpp_ctx_t *ctx = (xmpp_ctx_t*)userdata;
-    xmpp_stanza_t *body_stanza;
-    
+    xmpp_stanza_t *body_stanza, *txt_stanza;
+
+    type = xmpp_stanza_get_type_ptr(stanza);
+    if (!type || strncmp(type, "chat", 4) != 0) {
+        return -1;
+    }
+
     body_stanza = xmpp_stanza_get_child_by_name(stanza, "body");
-    if (body_stanza) {
-        intext = xmpp_stanza_get_text(body_stanza);
-        
+    if (!body_stanza) {
+        return -1;
+    }
+
+    txt_stanza = xmpp_stanza_get_children(body_stanza);
+    if (!txt_stanza) {
+        return -1;
+    }
+
+    intext = xmpp_stanza_get_text_ptr(txt_stanza);
+    if (intext) {
         // 转码
         size_t msg_len = strlen(intext);
         char *buff = malloc(msg_len * 2);
         if (simple_convert("UTF-8", "GBK", intext, msg_len, buff, msg_len * 2) < 0) {
             perror("UTF8=>GBK error");
         }
-        
+
         printf("---------------------------------------------\n");
-        printf("[Message from %s]: \n%s\n", xmpp_stanza_get_attribute(stanza, "from"), buff);
+        printf("[Message from %s]: \n%s\n", xmpp_stanza_get_attribute_ptr(stanza, "from"), buff);
         printf("---------------------------------------------\n");
-        
+
         free(buff);
-        xmpp_free(ctx, intext);
     }
-    
+
     return XMPP_HANDLER_AGAIN;
 }

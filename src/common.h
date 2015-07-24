@@ -10,8 +10,15 @@
 #include <stdbool.h>
 
 // string处理
-#define imcore_snprintf evutil_snprintf
-#define imcore_vsnprintf evutil_vsnprintf
+#if defined(_MSC_VER) && _MSC_VER < 1900
+#include "snprintf.h"
+
+#define imcore_snprintf c99_snprintf
+#define imcore_vsnprintf c99_vsnprintf
+#else
+#define imcore_snprintf snprintf
+#define imcore_vsnprintf vsnprintf
+#endif
 
 // 该死的vs不认识inline
 #if defined(_WIN32) && !defined(__cplusplus)

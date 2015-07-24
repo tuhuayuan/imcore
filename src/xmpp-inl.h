@@ -18,11 +18,17 @@
 #include "common.h"
 #include "list.h"
 #include "sock.h"
+#include "mm.h"
 
 #include "xmpp.h"
 #include "xmpp-hash.h"
 #include "xmpp-parser.h"
 #include "xmpp-sasl.h"
+
+// 内存管理
+#define xmpp_alloc(userdata, size) (safe_mem_malloc(size, userdata))
+#define xmpp_realloc(userdata, p, size) (safe_mem_realloc(p, size, userdata))
+#define xmpp_free(unused, p) (safe_mem_free(p))
 
 // 运行状态
 typedef enum {
@@ -36,22 +42,19 @@ struct _xmpp_ctx_t {
     xmpp_loop_status_t loop_status;    // 事件循环状态
     struct event_base *base;           // 事件循环
     SSL_CTX *ssl_ctx;                  // ssl上下文环境
-    const xmpp_mem_t *mem;             // 内存管理
     const xmpp_log_t *log;             // 日志管理
 };
 
 //日志管理helper
 void xmpp_log(const xmpp_ctx_t *ctx, xmpp_log_level_t level, const char *area,
-              const char *fmt,
-              va_list ap);
+              const char *fmt, va_list ap);
 void xmpp_error(const xmpp_ctx_t *ctx, const char *area, const char *fmt, ...);
 void xmpp_warn(const xmpp_ctx_t *ctx, const char *area, const char *fmt, ...);
 void xmpp_info(const xmpp_ctx_t *ctx, const char *area, const char *fmt, ...);
 void xmpp_debug(const xmpp_ctx_t *ctx, const char *area, const char *fmt, ...);
 
-// 内存管理helper
-void *xmpp_alloc(const xmpp_ctx_t *ctx, size_t size);
-void *xmpp_realloc(const xmpp_ctx_t *ctx, void *p, size_t size);
+
+// 字符串复制
 char *xmpp_strdup(const xmpp_ctx_t *ctx, const char *s);
 
 // JID helper
@@ -77,10 +80,10 @@ struct _xmpp_handlist_t {
     void *handler;
     void *userdata;
     int enabled;
-    
+
     // 链表头
     struct list_head dlist;
-    
+
     union {
         /* timed handlers */
         struct {
@@ -113,12 +116,12 @@ struct _xmpp_conn_t {
     xmpp_conn_type_t type;
     xmpp_conn_state_t state;
     void *userdata;
-    
+
     int error;
     unsigned long respond_timeout;         // 超时限制
     xmpp_stream_error_t *stream_error;     // 最后的错误对象
     struct bufferevent *evbuffer;
-    
+
     int tls_disabled;                     // 客户端是否允许tls
     int tls_support;                      // 是否支持tls
     int sasl_support;                     // 支持什么sasl
@@ -127,7 +130,7 @@ struct _xmpp_conn_t {
     int tls_failed;                       // 建立tls失败了
     int bind_required;                    // 服务器强制要求绑定资源
     int session_required;                 // 服务器强制要求绑定session
-    
+
     // Xmpp信息
     char *lang;
     char *domain;
@@ -138,19 +141,19 @@ struct _xmpp_conn_t {
     char *bound_jid;
     char *stream_id;
     int authenticated;                    // 是否已经完成握手
-    
+
     // xmpp stanza 解析器
     parser_t *parser;
-    
+
     // auth
     xmpp_open_handler open_handler;
-    
+
     // handles
     xmpp_handlist_t timed_handlers;
     xmpp_handlist_t handlers;
     hash_t *id_handlers;
-    
-    
+
+
     // 连接回调函数（外部接口）
     xmpp_conn_handler conn_handler;
 };
@@ -182,12 +185,12 @@ struct _xmpp_stanza_t {
     int ref;
     xmpp_ctx_t *ctx;
     xmpp_stanza_type_t type;
-    
+
     xmpp_stanza_t *prev;
     xmpp_stanza_t *next;
     xmpp_stanza_t *children;
     xmpp_stanza_t *parent;
-    
+
     char *data;
     hash_t *attributes;
 };
@@ -212,4 +215,6 @@ void handler_clear_all(xmpp_conn_t *conn);
 // 连接建立，处理stanza流入口
 void auth_handle_open(xmpp_conn_t *conn);
 
+// hash释放回调
+void util_hash_free(const xmpp_ctx_t* const ctx, void* p);
 #endif /* __IMCORE_XMPP_COMMON_H__ */
