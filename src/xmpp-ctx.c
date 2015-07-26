@@ -5,33 +5,10 @@
 
 void xmpp_initialize(void)
 {
-#if defined(WIN32)
-    evthread_use_windows_threads();
-#endif
-#if defined(POSIX)
-    evthread_use_pthreads();
-#endif
-
-    // 加载socket库
-    sock_initialize();
-
-    // 加载SSL库
-    SSL_library_init();
-    ERR_load_crypto_strings();
-    SSL_load_error_strings();
-
-    if (RAND_poll() == 0) {
-        fprintf(stderr, "RAND_poll() failed.\n");
-    }
 }
 
 void xmpp_shutdown(void)
 {
-    // 关闭socket库
-    sock_shutdown();
-    // 清理event库 libevent2.1.xx新增
-    libevent_global_shutdown();
-
 }
 
 // 日志等级
@@ -60,7 +37,7 @@ xmpp_log_t *xmpp_get_default_logger(xmpp_log_level_t level)
 {
     if (level > XMPP_LEVEL_ERROR) level = XMPP_LEVEL_ERROR;
     if (level < XMPP_LEVEL_DEBUG) level = XMPP_LEVEL_DEBUG;
-
+    
     return (xmpp_log_t*)&_xmpp_default_loggers[level];
 }
 static xmpp_log_t xmpp_default_log = { NULL, NULL };
@@ -72,9 +49,9 @@ void xmpp_log(const xmpp_ctx_t *ctx, xmpp_log_level_t level, const char *area, c
     char smbuf[1024];
     char *buf;
     va_list copy;
-
+    
     va_copy(copy, ap);
-    ret = imcore_vsnprintf(smbuf, sizeof(smbuf), fmt, ap);
+    ret = im_vsnprintf(smbuf, sizeof(smbuf), fmt, ap);
     if (ret >= (int)sizeof(smbuf)) {
         buf = (char*)xmpp_alloc((void*)ctx, ret + 1);
         if (!buf) {
@@ -84,7 +61,7 @@ void xmpp_log(const xmpp_ctx_t *ctx, xmpp_log_level_t level, const char *area, c
             return;
         }
         oldret = ret;
-        ret = imcore_vsnprintf(buf, ret + 1, fmt, copy);
+        ret = im_vsnprintf(buf, ret + 1, fmt, copy);
         if (ret > oldret) {
             xmpp_error(ctx, "log", "Unexpected error");
             xmpp_free(ctx, buf);
@@ -95,10 +72,10 @@ void xmpp_log(const xmpp_ctx_t *ctx, xmpp_log_level_t level, const char *area, c
         buf = smbuf;
     }
     va_end(copy);
-
+    
     if (ctx->log->handler)
         ctx->log->handler(ctx->log->userdata, level, area, buf);
-
+        
     if (buf != smbuf)
         xmpp_free(ctx, buf);
 }
@@ -107,7 +84,7 @@ void xmpp_log(const xmpp_ctx_t *ctx, xmpp_log_level_t level, const char *area, c
 void xmpp_error(const xmpp_ctx_t *ctx, const char *area, const char *fmt, ...)
 {
     va_list ap;
-
+    
     va_start(ap, fmt);
     xmpp_log(ctx, XMPP_LEVEL_ERROR, area, fmt, ap);
     va_end(ap);
@@ -116,7 +93,7 @@ void xmpp_error(const xmpp_ctx_t *ctx, const char *area, const char *fmt, ...)
 void xmpp_warn(const xmpp_ctx_t *ctx, const char *area, const char *fmt, ...)
 {
     va_list ap;
-
+    
     va_start(ap, fmt);
     xmpp_log(ctx, XMPP_LEVEL_WARN, area, fmt, ap);
     va_end(ap);
@@ -125,7 +102,7 @@ void xmpp_warn(const xmpp_ctx_t *ctx, const char *area, const char *fmt, ...)
 void xmpp_info(const xmpp_ctx_t *ctx, const char *area, const char *fmt, ...)
 {
     va_list ap;
-
+    
     va_start(ap, fmt);
     xmpp_log(ctx, XMPP_LEVEL_INFO, area, fmt, ap);
     va_end(ap);
@@ -134,7 +111,7 @@ void xmpp_info(const xmpp_ctx_t *ctx, const char *area, const char *fmt, ...)
 void xmpp_debug(const xmpp_ctx_t *ctx, const char *area, const char *fmt, ...)
 {
     va_list ap;
-
+    
     va_start(ap, fmt);
     xmpp_log(ctx, XMPP_LEVEL_DEBUG, area, fmt, ap);
     va_end(ap);
@@ -145,21 +122,21 @@ xmpp_ctx_t *xmpp_ctx_new(const xmpp_log_t *log)
 {
     xmpp_ctx_t *ctx = NULL;
     ctx = safe_mem_malloc(sizeof(xmpp_ctx_t), NULL);
-
+    
     if (ctx != NULL) {
         if (log == NULL)
             ctx->log = &xmpp_default_log;
         else
             ctx->log = log;
-
+            
         // 初始化eventbase
         ctx->base = event_base_new();
-
+        
         // 初始化SSL上下文
         ctx->ssl_ctx = SSL_CTX_new(TLS_client_method());
         ctx->loop_status = XMPP_LOOP_NOTSTARTED;
     }
-
+    
     return ctx;
 }
 
@@ -170,3 +147,7 @@ void xmpp_ctx_free(xmpp_ctx_t *ctx)
     xmpp_free(ctx, ctx);
 }
 
+void xmpp_hash_free(void* p)
+{
+    safe_mem_free(p);
+}

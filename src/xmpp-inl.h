@@ -1,7 +1,6 @@
-/************************************************************************/
-/* common.h Í¨ÓÃ·½·¨¡¢½á¹¹Ìå                                             */
-/************************************************************************/
-
+ï»¿/* xmpp-inl.h
+ * xmppåè®®å’Œè°å®ç°å¤´æ–‡ä»¶
+*/
 #ifndef __IMCORE_XMPP_COMMON_H__
 #define __IMCORE_XMPP_COMMON_H__
 
@@ -19,33 +18,34 @@
 #include "list.h"
 #include "sock.h"
 #include "mm.h"
+#include "hash.h"
+#include "stringutils.h"
 
 #include "xmpp.h"
-#include "xmpp-hash.h"
 #include "xmpp-parser.h"
 #include "xmpp-sasl.h"
 
-// ÄÚ´æ¹ÜÀí
+// å†…å­˜ç®¡ç†
 #define xmpp_alloc(userdata, size) (safe_mem_malloc(size, userdata))
 #define xmpp_realloc(userdata, p, size) (safe_mem_realloc(p, size, userdata))
 #define xmpp_free(unused, p) (safe_mem_free(p))
 
-// ÔËĞĞ×´Ì¬
+// è¿è¡ŒçŠ¶æ€
 typedef enum {
     XMPP_LOOP_NOTSTARTED,
     XMPP_LOOP_RUNNING,
     XMPP_LOOP_QUIT
 } xmpp_loop_status_t;
 
-// xmppÔËĞĞÉÏÏÂÎÄ¶ÔÏó
+// xmppè¿è¡Œä¸Šä¸‹æ–‡å¯¹è±¡
 struct _xmpp_ctx_t {
-    xmpp_loop_status_t loop_status;    // ÊÂ¼şÑ­»·×´Ì¬
-    struct event_base *base;           // ÊÂ¼şÑ­»·
-    SSL_CTX *ssl_ctx;                  // sslÉÏÏÂÎÄ»·¾³
-    const xmpp_log_t *log;             // ÈÕÖ¾¹ÜÀí
+    xmpp_loop_status_t loop_status;    // äº‹ä»¶å¾ªç¯çŠ¶æ€
+    struct event_base *base;           // äº‹ä»¶å¾ªç¯
+    SSL_CTX *ssl_ctx;                  // sslä¸Šä¸‹æ–‡ç¯å¢ƒ
+    const xmpp_log_t *log;             // æ—¥å¿—ç®¡ç†
 };
 
-//ÈÕÖ¾¹ÜÀíhelper
+//æ—¥å¿—ç®¡ç†helper
 void xmpp_log(const xmpp_ctx_t *ctx, xmpp_log_level_t level, const char *area,
               const char *fmt, va_list ap);
 void xmpp_error(const xmpp_ctx_t *ctx, const char *area, const char *fmt, ...);
@@ -54,8 +54,8 @@ void xmpp_info(const xmpp_ctx_t *ctx, const char *area, const char *fmt, ...);
 void xmpp_debug(const xmpp_ctx_t *ctx, const char *area, const char *fmt, ...);
 
 
-// ×Ö·û´®¸´ÖÆ
-char *xmpp_strdup(const xmpp_ctx_t *ctx, const char *s);
+// å­—ç¬¦ä¸²å¤åˆ¶
+#define xmpp_strdup(a, b) im_strndup(b, im_strlen(b))
 
 // JID helper
 char *xmpp_jid_new(xmpp_ctx_t *ctx, const char *node, const char *domain,
@@ -65,29 +65,29 @@ char *xmpp_jid_node(xmpp_ctx_t *ctx, const char *jid);
 char *xmpp_jid_domain(xmpp_ctx_t *ctx, const char *id);
 char *xmpp_jid_resource(xmpp_ctx_t *ctx, const char *jid);
 
-// Á¬½Ó×´Ì¬
+// è¿æ¥çŠ¶æ€
 typedef enum {
     XMPP_STATE_DISCONNECTED,
     XMPP_STATE_CONNECTING,
     XMPP_STATE_CONNECTED
 } xmpp_conn_state_t;
 
-// HandlerÁ´±í
+// Handleré“¾è¡¨
 typedef struct _xmpp_handlist_t xmpp_handlist_t;
 struct _xmpp_handlist_t {
-    int user_handler;                     // ÊÇ·ñÊÇÓÃ»§handler
+    int user_handler;                     // æ˜¯å¦æ˜¯ç”¨æˆ·handler
     xmpp_conn_t *conn;
     void *handler;
     void *userdata;
     int enabled;
-
-    // Á´±íÍ·
+    
+    // é“¾è¡¨å¤´
     struct list_head dlist;
-
+    
     union {
         /* timed handlers */
         struct {
-            struct timeval period;           // ´¥·¢¼ä¸ô
+            struct timeval period;           // è§¦å‘é—´éš”
             struct event *evtimeout;
         };
         /* id handlers */
@@ -103,35 +103,35 @@ struct _xmpp_handlist_t {
     };
 };
 
-// Ö§³ÖµÄSASLÈÏÖ¤·½Ê½
+// æ”¯æŒçš„SASLè®¤è¯æ–¹å¼
 #define SASL_MASK_PLAIN 0x01
 #define SASL_MASK_DIGESTMD5 0x02
 
-// streamÁ÷¿ªÆôµÄ»Øµ÷º¯ÊıÇ©Ãû
-typedef void (*xmpp_open_handler)(xmpp_conn_t *const conn);
+// streamæµå¼€å¯çš„å›è°ƒå‡½æ•°ç­¾å
+typedef void(*xmpp_open_handler)(xmpp_conn_t *const conn);
 
 struct _xmpp_conn_t {
-    unsigned int ref;                     // ÒıÓÃ¼ÆÊı
-    xmpp_ctx_t *ctx;                      // ËùÊôÉÏÏÂÎÄ
+    unsigned int ref;                     // å¼•ç”¨è®¡æ•°
+    xmpp_ctx_t *ctx;                      // æ‰€å±ä¸Šä¸‹æ–‡
     xmpp_conn_type_t type;
     xmpp_conn_state_t state;
     void *userdata;
-
+    
     int error;
-    unsigned long respond_timeout;         // ³¬Ê±ÏŞÖÆ
-    xmpp_stream_error_t *stream_error;     // ×îºóµÄ´íÎó¶ÔÏó
+    unsigned long respond_timeout;         // è¶…æ—¶é™åˆ¶
+    xmpp_stream_error_t *stream_error;     // æœ€åçš„é”™è¯¯å¯¹è±¡
     struct bufferevent *evbuffer;
-
-    int tls_disabled;                     // ¿Í»§¶ËÊÇ·ñÔÊĞítls
-    int tls_support;                      // ÊÇ·ñÖ§³Ötls
-    int sasl_support;                     // Ö§³ÖÊ²Ã´sasl
-    int zlib_support;                     // Ö§³ÖzlibÑ¹Ëõ·ñ
-    int secured;                          // ÊÇ·ñÊÇ°²È«Á¬½Ó
-    int tls_failed;                       // ½¨Á¢tlsÊ§°ÜÁË
-    int bind_required;                    // ·şÎñÆ÷Ç¿ÖÆÒªÇó°ó¶¨×ÊÔ´
-    int session_required;                 // ·şÎñÆ÷Ç¿ÖÆÒªÇó°ó¶¨session
-
-    // XmppĞÅÏ¢
+    
+    int tls_disabled;                     // å®¢æˆ·ç«¯æ˜¯å¦å…è®¸tls
+    int tls_support;                      // æ˜¯å¦æ”¯æŒtls
+    int sasl_support;                     // æ”¯æŒä»€ä¹ˆsasl
+    int zlib_support;                     // æ”¯æŒzlibå‹ç¼©å¦
+    int secured;                          // æ˜¯å¦æ˜¯å®‰å…¨è¿æ¥
+    int tls_failed;                       // å»ºç«‹tlså¤±è´¥äº†
+    int bind_required;                    // æœåŠ¡å™¨å¼ºåˆ¶è¦æ±‚ç»‘å®šèµ„æº
+    int session_required;                 // æœåŠ¡å™¨å¼ºåˆ¶è¦æ±‚ç»‘å®šsession
+    
+    // Xmppä¿¡æ¯
     char *lang;
     char *domain;
     char *connectdomain;
@@ -140,68 +140,68 @@ struct _xmpp_conn_t {
     char *pass;
     char *bound_jid;
     char *stream_id;
-    int authenticated;                    // ÊÇ·ñÒÑ¾­Íê³ÉÎÕÊÖ
-
-    // xmpp stanza ½âÎöÆ÷
+    int authenticated;                    // æ˜¯å¦å·²ç»å®Œæˆæ¡æ‰‹
+    
+    // xmpp stanza è§£æå™¨
     parser_t *parser;
-
+    
     // auth
     xmpp_open_handler open_handler;
-
+    
     // handles
     xmpp_handlist_t timed_handlers;
     xmpp_handlist_t handlers;
     hash_t *id_handlers;
-
-
-    // Á¬½Ó»Øµ÷º¯Êı£¨Íâ²¿½Ó¿Ú£©
+    
+    
+    // è¿æ¥å›è°ƒå‡½æ•°ï¼ˆå¤–éƒ¨æ¥å£ï¼‰
     xmpp_conn_handler conn_handler;
 };
 
-// Ö±½Ó¶Ï¿ª
+// ç›´æ¥æ–­å¼€
 void conn_do_disconnect(xmpp_conn_t *conn);
 
-// ·¢ËÍÁ÷³õÊ¼»¯
+// å‘é€æµåˆå§‹åŒ–
 void conn_init_stream(xmpp_conn_t *conn);
 
-// Æô¶¯ssl
+// å¯åŠ¨ssl
 void conn_start_ssl(xmpp_conn_t *conn);
 
-// ÆôÓÃzlibÑ¹Ëõ
+// å¯ç”¨zlibå‹ç¼©
 int conn_start_compression(xmpp_conn_t *conn);
 
-// ÉèÖÃxmpp_open_handler²¢ÇÒÖØÖÃ½âÎöÆ÷
+// è®¾ç½®xmpp_open_handlerå¹¶ä¸”é‡ç½®è§£æå™¨
 void conn_reset_stream(xmpp_conn_t *conn, xmpp_open_handler handler);
 
-// xmpp stanzaÀàĞÍ
+// xmpp stanzaç±»å‹
 typedef enum {
     XMPP_STANZA_UNKNOWN,
     XMPP_STANZA_TEXT,
     XMPP_STANZA_TAG
 } xmpp_stanza_type_t;
 
-// xmpp stanza¶ÔÏó
+// xmpp stanzaå¯¹è±¡
 struct _xmpp_stanza_t {
     int ref;
     xmpp_ctx_t *ctx;
     xmpp_stanza_type_t type;
-
+    
     xmpp_stanza_t *prev;
     xmpp_stanza_t *next;
     xmpp_stanza_t *children;
     xmpp_stanza_t *parent;
-
+    
     char *data;
     hash_t *attributes;
 };
 
-// ´¥·¢stanza»Øµ÷
+// è§¦å‘stanzaå›è°ƒ
 void handler_fire_stanza(xmpp_conn_t *conn, xmpp_stanza_t *stanza);
 
-// ËùÓĞ¶¨Ê±Æ÷handlerÖØĞÂ¿ªÊ¼¼ÆÊÂ¼ş
+// æ‰€æœ‰å®šæ—¶å™¨handleré‡æ–°å¼€å§‹è®¡äº‹ä»¶
 void handler_reset_timed(xmpp_conn_t *conn, int user_only);
 
-// ÄÚ²¿handler¹ÜÀí
+// å†…éƒ¨handlerç®¡ç†
 void handler_add_timed(xmpp_conn_t *conn, xmpp_timed_handler handler,
                        unsigned long period,
                        void *userdata);
@@ -212,9 +212,10 @@ void handler_add(xmpp_conn_t *conn, xmpp_handler handler, const char *ns,
                  const char *type, void *userdata);
 void handler_clear_all(xmpp_conn_t *conn);
 
-// Á¬½Ó½¨Á¢£¬´¦ÀístanzaÁ÷Èë¿Ú
+// è¿æ¥å»ºç«‹ï¼Œå¤„ç†stanzaæµå…¥å£
 void auth_handle_open(xmpp_conn_t *conn);
 
-// hashÊÍ·Å»Øµ÷
-void util_hash_free(const xmpp_ctx_t* const ctx, void* p);
+// hashé‡Šæ”¾å›è°ƒ
+void xmpp_hash_free(void* p);
+
 #endif /* __IMCORE_XMPP_COMMON_H__ */

@@ -1,6 +1,6 @@
 /* stanza.c
- * xmpp stanzaÊµÏÖ
- * »ù±¾²»ĞèÒªĞŞ¸Ä£¬¿ÉÒÔÌí¼ÓÕë¶ÔÒªÓÃµÄstanzaÔö¼Óhelper·½·¨
+ * xmpp stanzaå®ç°
+ * åŸºæœ¬ä¸éœ€è¦ä¿®æ”¹ï¼Œå¯ä»¥æ·»åŠ é’ˆå¯¹è¦ç”¨çš„stanzaå¢åŠ helperæ–¹æ³•
  */
 #include "xmpp-inl.h"
 
@@ -22,42 +22,37 @@ xmpp_stanza_t *xmpp_stanza_new(xmpp_ctx_t *ctx)
     return stanza;
 }
 
-void xmpp_stanza_free(xmpp_stanza_t *stanza)
-{
-
-}
-
-// ÒıÓÃ¿½±´
+// å¼•ç”¨æ‹·è´
 xmpp_stanza_t *xmpp_stanza_clone(xmpp_stanza_t *stanza)
 {
     stanza->ref++;
     return stanza;
 }
 
-// Éî¶È¿½±´
+// æ·±åº¦æ‹·è´
 xmpp_stanza_t *xmpp_stanza_copy(const xmpp_stanza_t *stanza)
 {
     xmpp_stanza_t *copy, *child, *copychild, *tail;
     hash_iterator_t *iter;
     const char *key;
     void *val;
-
+    
     copy = xmpp_stanza_new(stanza->ctx);
     if (!copy)
         goto copy_error;
-
-    // ¿½±´ÀàĞÍ
+        
+    // æ‹·è´ç±»å‹
     copy->type = stanza->type;
-
-    // Êı¾İ
+    
+    // æ•°æ®
     if (stanza->data) {
         copy->data = xmpp_strdup(stanza->ctx, stanza->data);
         if (!copy->data) goto copy_error;
     }
-
-    // ÊôĞÔ
+    
+    // å±æ€§
     if (stanza->attributes) {
-        copy->attributes = hash_new(stanza->ctx, 8, util_hash_free);
+        copy->attributes = hash_new(8, xmpp_hash_free);
         if (!copy->attributes) goto copy_error;
         iter = hash_iter_new(stanza->attributes);
         if (!iter) {
@@ -66,24 +61,24 @@ xmpp_stanza_t *xmpp_stanza_copy(const xmpp_stanza_t *stanza)
         while ((key = hash_iter_next(iter))) {
             val = xmpp_strdup(stanza->ctx,
                               (char *)hash_get(stanza->attributes, key));
-
+                              
             if (!val)
                 goto copy_error;
-
+                
             if (hash_add(copy->attributes, key, val))
                 goto copy_error;
         }
         hash_iter_release(iter);
     }
-
-    // µİ¹é¸´ÖÆËùÓĞchild
+    
+    // é€’å½’å¤åˆ¶æ‰€æœ‰child
     tail = copy->children;
     for (child = stanza->children; child; child = child->next) {
         copychild = xmpp_stanza_copy(child);
-
+        
         if (!copychild)
             goto copy_error;
-
+            
         copychild->parent = copy;
         if (tail) {
             copychild->prev = tail;
@@ -93,10 +88,10 @@ xmpp_stanza_t *xmpp_stanza_copy(const xmpp_stanza_t *stanza)
         }
         tail = copychild;
     }
-
+    
     return copy;
-
-    // ´íÎó
+    
+    // é”™è¯¯
 copy_error:
     if (copy) xmpp_stanza_release(copy);
     return NULL;
@@ -106,12 +101,12 @@ int xmpp_stanza_release(xmpp_stanza_t *stanza)
 {
     int released = 0;
     xmpp_stanza_t *child, *tchild;
-
-    // ÒıÓÃ¼ÆÊıÅĞ¶Ï
+    
+    // å¼•ç”¨è®¡æ•°åˆ¤æ–­
     if (stanza->ref > 1)
         stanza->ref--;
     else {
-        // µİ¹éµ÷ÓÃxmpp_stanza_releaseÉ¾³ıËùÓĞ×Óstanza
+        // é€’å½’è°ƒç”¨xmpp_stanza_releaseåˆ é™¤æ‰€æœ‰å­stanza
         child = stanza->children;
         while (child) {
             tchild = child;
@@ -200,81 +195,81 @@ static inline void _render_update(int *written, int length, int lastwrite, size_
     }
 }
 
-// µİ¹éĞòÁĞ»¯
+// é€’å½’åºåˆ—åŒ–
 static int _render_stanza_recursive(xmpp_stanza_t *stanza, char *buf, size_t buflen)
 {
     int ret, written;
-
+    
     char *ptr = buf;
     size_t left = buflen;
-
+    
     xmpp_stanza_t *child;
     hash_iterator_t *iter;
-
+    
     const char *key;
     char *tmp;
     char *value;
-
-    // ÒÑ¾­Ğ´ÁË×Ö·ûÊı
+    
+    // å·²ç»å†™äº†å­—ç¬¦æ•°
     written = 0;
-
+    
     if (stanza->type == XMPP_STANZA_UNKNOWN)
         return XMPP_EINVOP;
-
+        
     if (stanza->type == XMPP_STANZA_TEXT) {
         if (!stanza->data) {
             return XMPP_EINVOP;
         }
-
-        // xml×Ö·û×ª»»
+        
+        // xmlå­—ç¬¦è½¬æ¢
         tmp = _escape_xml(stanza->ctx, stanza->data);
         if (tmp == NULL)
             return XMPP_EMEM;
-
-        ret = imcore_snprintf(ptr, left, "%s", tmp);
+            
+        ret = im_snprintf(ptr, left, "%s", tmp);
         xmpp_free(stanza->ctx, tmp);
         if (ret < 0)
             return XMPP_EMEM;
         _render_update(&written, buflen, ret, &left, &ptr);
-
+        
     } else {
         if (!stanza->data)
             return XMPP_EINVOP;
-
-        // Êä³öxml±êÇ©Í·
-        ret = imcore_snprintf(ptr, left, "<%s", stanza->data);
+            
+        // è¾“å‡ºxmlæ ‡ç­¾å¤´
+        ret = im_snprintf(ptr, left, "<%s", stanza->data);
         if (ret < 0)
             return XMPP_EMEM;
         _render_update(&written, buflen, ret, &left, &ptr);
-
-        // Êä³ö±êÇ©ÊôĞÔ
+        
+        // è¾“å‡ºæ ‡ç­¾å±æ€§
         if (stanza->attributes && hash_num_keys(stanza->attributes) > 0) {
             iter = hash_iter_new(stanza->attributes);
             while ((key = hash_iter_next(iter))) {
                 value = (char*)hash_get(stanza->attributes, key);
                 if (!value)
                     continue;
-
-                // ´¦ÀíxmlnsÊôĞÔ
+                    
+                // å¤„ç†xmlnså±æ€§
                 if (!strcmp(key, "xmlns")) {
-
+                
                     if (stanza->parent && stanza->parent->attributes) {
                         char *parent_key_value = (char*)hash_get(stanza->parent->attributes, key);
                         if (parent_key_value && !strcmp(value, parent_key_value)) {
                             continue;
                         }
                     }
-
+                    
                     if (!stanza->parent && !strcmp(value, XMPP_NS_CLIENT))
                         continue;
                 }
-
+                
                 tmp = _escape_xml(stanza->ctx, value);
                 if (tmp == NULL)
                     return XMPP_EMEM;
-
-                // Êä³ö²¢¸üĞÂË÷Òı
-                ret = imcore_snprintf(ptr, left, " %s='%s'", key, tmp);
+                    
+                // è¾“å‡ºå¹¶æ›´æ–°ç´¢å¼•
+                ret = im_snprintf(ptr, left, " %s='%s'", key, tmp);
                 xmpp_free(stanza->ctx, tmp);
                 if (ret < 0)
                     return XMPP_EMEM;
@@ -283,19 +278,19 @@ static int _render_stanza_recursive(xmpp_stanza_t *stanza, char *buf, size_t buf
             hash_iter_release(iter);
         }
         if (!stanza->children) {
-            // Ã»ÓĞ×ÓÔªËØÔò¹Ø±Õ±êÇ©
-            ret = imcore_snprintf(ptr, left, "/>");
+            // æ²¡æœ‰å­å…ƒç´ åˆ™å…³é—­æ ‡ç­¾
+            ret = im_snprintf(ptr, left, "/>");
             if (ret < 0)
                 return XMPP_EMEM;
             _render_update(&written, buflen, ret, &left, &ptr);
         } else {
-            // Êä³öÆğÊ¼±êÇ©½áÊø
-            ret = imcore_snprintf(ptr, left, ">");
+            // è¾“å‡ºèµ·å§‹æ ‡ç­¾ç»“æŸ
+            ret = im_snprintf(ptr, left, ">");
             if (ret < 0)
                 return XMPP_EMEM;
             _render_update(&written, buflen, ret, &left, &ptr);
-
-            // Ñ­»·Êä³ö×ÓÔªËØ
+            
+            // å¾ªç¯è¾“å‡ºå­å…ƒç´ 
             child = stanza->children;
             while (child) {
                 ret = _render_stanza_recursive(child, ptr, left);
@@ -304,9 +299,9 @@ static int _render_stanza_recursive(xmpp_stanza_t *stanza, char *buf, size_t buf
                 _render_update(&written, buflen, ret, &left, &ptr);
                 child = child->next;
             }
-
-            // Êä³ö½áÊø±êÇ©
-            ret = imcore_snprintf(ptr, left, "</%s>", stanza->data);
+            
+            // è¾“å‡ºç»“æŸæ ‡ç­¾
+            ret = im_snprintf(ptr, left, "</%s>", stanza->data);
             if (ret < 0)
                 return XMPP_EMEM;
             _render_update(&written, buflen, ret, &left, &ptr);
@@ -315,14 +310,14 @@ static int _render_stanza_recursive(xmpp_stanza_t *stanza, char *buf, size_t buf
     return written;
 }
 
-// xml stanza ×ª ×Ö·û´®
+// xml stanza è½¬ å­—ç¬¦ä¸²
 int  xmpp_stanza_to_text(xmpp_stanza_t *stanza, char **const buf, size_t *buflen)
 {
     char *buffer, *tmp;
     size_t length;
     int ret;
-
-    // µ¥Î»»º³åÇø´óĞ¡
+    
+    // å•ä½ç¼“å†²åŒºå¤§å°
     length = 128;
     buffer = xmpp_alloc(stanza->ctx, length);
     if (!buffer) {
@@ -330,12 +325,12 @@ int  xmpp_stanza_to_text(xmpp_stanza_t *stanza, char **const buf, size_t *buflen
         *buflen = 0;
         return XMPP_EMEM;
     }
-
+    
     ret = _render_stanza_recursive(stanza, buffer, length);
     if (ret < 0)
         return ret;
-
-    // »º³åÇø²»¹»´ó£¬ÔÙ·ÖÅäÒ»¸öµ¥Î»´óĞ¡£¬Ö®Ç°µÄ½âÎöÄÚÈİ±£Áô
+        
+    // ç¼“å†²åŒºä¸å¤Ÿå¤§ï¼Œå†åˆ†é…ä¸€ä¸ªå•ä½å¤§å°ï¼Œä¹‹å‰çš„è§£æå†…å®¹ä¿ç•™
     if ((size_t)ret > length - 1) {
         tmp = xmpp_realloc(stanza->ctx, buffer, ret + 1);
         if (!tmp) {
@@ -350,7 +345,7 @@ int  xmpp_stanza_to_text(xmpp_stanza_t *stanza, char **const buf, size_t *buflen
         if ((size_t)ret > length - 1)
             return XMPP_EMEM;
     }
-
+    
     buffer[length - 1] = 0;
     *buf = buffer;
     *buflen = ret;
@@ -413,17 +408,17 @@ int xmpp_stanza_set_attribute(xmpp_stanza_t *stanza, const char *key, const char
     if (stanza->type != XMPP_STANZA_TAG) {
         return XMPP_EINVOP;
     }
-
+    
     if (!stanza->attributes) {
-        stanza->attributes = hash_new(stanza->ctx, 8, util_hash_free);
+        stanza->attributes = hash_new(8, xmpp_hash_free);
         if (!stanza->attributes) return XMPP_EMEM;
     }
-
+    
     val = xmpp_strdup(stanza->ctx, value);
     if (!val) {
         return XMPP_EMEM;
     }
-
+    
     hash_add(stanza->attributes, key, val);
     return XMPP_EOK;
 }
@@ -436,10 +431,10 @@ int xmpp_stanza_set_ns(xmpp_stanza_t *stanza, const char *ns)
 int xmpp_stanza_add_child(xmpp_stanza_t *stanza, xmpp_stanza_t *child)
 {
     xmpp_stanza_t *s;
-
-    // Ìí¼ÓÒıÓÃ¼ÆÊı
+    
+    // æ·»åŠ å¼•ç”¨è®¡æ•°
     xmpp_stanza_clone(child);
-
+    
     child->parent = stanza;
     if (!stanza->children) {
         stanza->children = child;
@@ -456,12 +451,12 @@ int xmpp_stanza_set_text(xmpp_stanza_t *stanza, const char *text)
 {
     if (stanza->type == XMPP_STANZA_TAG)
         return XMPP_EINVOP;
-
+        
     stanza->type = XMPP_STANZA_TEXT;
     if (stanza->data)
         xmpp_free(stanza->ctx, stanza->data);
     stanza->data = xmpp_strdup(stanza->ctx, text);
-
+    
     return XMPP_EOK;
 }
 
@@ -470,15 +465,15 @@ int xmpp_stanza_set_text_safe(xmpp_stanza_t *stanza, const char *text, size_t si
     if (stanza->type == XMPP_STANZA_TAG)
         return XMPP_EINVOP;
     stanza->type = XMPP_STANZA_TEXT;
-
-    // ÊÍ·ÅÖ®Ç°µÄ
+    
+    // é‡Šæ”¾ä¹‹å‰çš„
     if (stanza->data)
         xmpp_free(stanza->ctx, stanza->data);
-
+        
     stanza->data = xmpp_alloc(stanza->ctx, size + 1);
     if (!stanza->data)
         return XMPP_EMEM;
-
+        
     memcpy(stanza->data, text, size);
     stanza->data[size] = 0;
     return XMPP_EOK;
@@ -493,7 +488,7 @@ char *xmpp_stanza_get_id_ptr(xmpp_stanza_t *stanza)
     return (char *)hash_get(stanza->attributes, "id");
 }
 
-char *xmpp_stanza_get_ns_ptr(xmpp_stanza_t *stanza)
+const char * xmpp_stanza_get_ns(xmpp_stanza_t *stanza)
 {
     if (stanza->type != XMPP_STANZA_TAG)
         return NULL;
@@ -526,8 +521,8 @@ xmpp_stanza_t *xmpp_stanza_get_child_by_ns(xmpp_stanza_t *stanza, const char *ns
 {
     xmpp_stanza_t *child = NULL;
     for (child = stanza->children; child; child = child->next) {
-        if (xmpp_stanza_get_ns_ptr(child) &&
-            strcmp(ns, xmpp_stanza_get_ns_ptr(child)) == 0)
+        if (xmpp_stanza_get_ns(child) &&
+            strcmp(ns, xmpp_stanza_get_ns(child)) == 0)
             break;
     }
     return child;
@@ -563,7 +558,7 @@ int xmpp_stanza_set_type(xmpp_stanza_t *stanza, const char *type)
     return xmpp_stanza_set_attribute(stanza, "type", type);
 }
 
-char *xmpp_stanza_get_attribute_ptr(xmpp_stanza_t *stanza, const char *name)
+const char * xmpp_stanza_get_attribute(xmpp_stanza_t *stanza, const char *name)
 {
     if (stanza->type != XMPP_STANZA_TAG)
         return NULL;

@@ -58,7 +58,7 @@ typedef void(*im_msg_handler)(im_session_t *session, im_msg_t *msg, void *userda
 IMCORE_API
 im_session_t *im_session_new(const char *host, const char *username, const char *password,
                              im_state_handler state_handler, im_msg_handler msg_handler, void *userdate);
-
+                             
 // 发起网络连接
 IMCORE_API
 im_result im_session_open(im_session_t *session);
@@ -123,17 +123,17 @@ typedef enum {
 IMCORE_API
 bool im_image_msg_read(const im_msg_t *im_msg, im_img_type *img_type,
                        const char *name, size_t *type_len, uint64_t *img_size);
-
+                       
 // 获取图片
 IMCORE_API
 bool im_image_msg_fetch(im_msg_t *im_msg, const char *path, const char *name, im_img_type img_type,
                         im_img_profile img_profile, im_media_fetch_cb fetch_cb, void *userdata);
-
+                        
 // 附加一个图片给消息
 IMCORE_API
 bool im_image_msg_add(im_msg_t *im_msg, const char *path, const char *name, im_img_type img_type,
                       im_media_fetch_cb sent_cb, void *userdata);
-
+                      
 // 声音编码类型（以后提供转码功能，当前作为客户端之间的协商标识）
 typedef enum {
     IM_VOICE_ENCODE_VORBIS,
@@ -156,17 +156,17 @@ typedef enum {
 IMCORE_API
 bool im_voice_msg_read(const im_msg_t *im_msg, im_voice_codec *codec, im_voice_container *container,
                        size_t *file_size, time_t *voice_len);
-
+                       
 // 获取声音文件.
 IMCORE_API
 bool im_voice_msg_fetch(im_msg_t *im_msg, const char *path, const char *name, im_voice_codec codec,
                         im_voice_container container, im_media_fetch_cb fetch_cb, void *userdata);
-
+                        
 // 添加一个音频文件到消息
 IMCORE_API
 bool im_voice_msg_add(im_msg_t *im_msg, const char *path, const char *name, im_voice_codec codec,
                       im_voice_container container, im_media_fetch_cb sent_cb, void *userdata);
-
+                      
 // 呼叫状态
 typedef enum {
     IM_CALL_CALLING,
@@ -182,28 +182,28 @@ typedef struct im_call_session im_call_session_t;
 // 数据类型是input_codec编码后的数据
 typedef void(*im_call_data_cb)(im_call_session_t *call_session, const char *buf, size_t len,
                                void *userdata);
-
+                               
 // 呼叫状态改变
 typedef void(*im_call_state_cb)(im_call_session_t *call_session, im_call_state state,
                                 void *userdata);
-
+                                
 // 创建一个呼叫请求
 IMCORE_API
 bool im_call_msg_open(im_msg_t *im_msg, im_voice_codec output_codec, im_voice_codec accept_codec,
                       im_call_state_cb state_cb,
                       im_call_data_cb recv_cb);
-
+                      
 // 读取呼叫消息codec默认都是PCM, 原因是方便播放以及录制(底层传输用的编码为Opus)
 IMCORE_API
 bool im_call_msg_read(const im_msg_t *im_msg, im_voice_codec *output_codec,
                       im_voice_codec *input_codec);
-
+                      
 // 开启一个呼叫session
 IMCORE_API
 im_call_session_t *im_call_open(im_msg_t *im_msg, im_voice_codec output_codec,
                                 im_voice_codec accept_codec,
                                 im_call_state_cb state_cb, im_call_data_cb recv_cb);
-
+                                
 // 关闭呼叫session
 IMCORE_API
 void im_call_close(im_call_session_t *call_session);
@@ -213,7 +213,7 @@ IMCORE_API
 void im_call_accept(im_msg_t *im_msg, im_call_session_t *call_session, bool accept,
                     const char *reason,
                     im_call_state_cb state_cb, im_call_data_cb recv_cb, void *userdata);
-
+                    
 // 挂断
 IMCORE_API
 void im_call_hangup(im_call_session_t *call_session);

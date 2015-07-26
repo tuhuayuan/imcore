@@ -1,5 +1,5 @@
 /* event.c
- * ÊÂ¼şÇı¶¯
+ * äº‹ä»¶é©±åŠ¨
  */
 #include "xmpp-inl.h"
 

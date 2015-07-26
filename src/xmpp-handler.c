@@ -1,5 +1,5 @@
-/* handler.c
- * »Øµ÷»úÖÆÊµÏÖ
+ï»¿/* handler.c
+ * å›è°ƒæœºåˆ¶å®ç°
  */
 #include "xmpp-inl.h"
 
@@ -7,7 +7,7 @@ static inline bool _check_handler_exist(xmpp_handlist_t *list, void *handler)
 {
     xmpp_handlist_t *pos_item = NULL;
     struct list_head *pos = NULL;
-
+    
     if (list != NULL) {
         list_for_each(pos, &list->dlist) {
             pos_item = list_entry(pos, xmpp_handlist_t, dlist);
@@ -24,12 +24,12 @@ static void _handler_id_free(xmpp_handlist_t *head, xmpp_handlist_t *item, const
 static void _handler_free(xmpp_handlist_t *target);
 
 
-// ¼ÆÊ±Æ÷»Øµ÷´úÀí
+// è®¡æ—¶å™¨å›è°ƒä»£ç†
 static void _handler_timer_proxy(evutil_socket_t fd, short what, void *arg)
 {
-    // »ñÈ¡´úÀíµÄ¾ä±ú
+    // è·å–ä»£ç†çš„å¥æŸ„
     xmpp_handlist_t *item = arg;
-
+    
     if (item->user_handler && !item->conn->authenticated) {
         if (!((xmpp_timed_handler)(item->user_handler))(item->conn, item->userdata)) {
             _handler_timed_free(item);
@@ -42,16 +42,16 @@ void handler_fire_stanza(xmpp_conn_t *conn, xmpp_stanza_t *stanza)
     xmpp_handlist_t *item = NULL, *pos_item = NULL;
     char *id, *ns, *name, *type;
     struct list_head *pos, *tmp;
-
-    // ÏÈ´¦Àíid
+    
+    // å…ˆå¤„ç†id
     id = xmpp_stanza_get_id_ptr(stanza);
     if (id) {
         item = (xmpp_handlist_t*)hash_get(conn->id_handlers, id);
         if (item) {
             list_for_each_safe(pos, tmp, &item->dlist) {
                 pos_item = list_entry(pos, xmpp_handlist_t, dlist);
-
-                // Ã»ÓĞµÇÂ¼µÄ»°²»µ÷ÓÃÓÃ»§µÄhandler
+                
+                // æ²¡æœ‰ç™»å½•çš„è¯ä¸è°ƒç”¨ç”¨æˆ·çš„handler
                 if (pos_item->user_handler && !conn->authenticated) {
                     continue;
                 }
@@ -61,30 +61,30 @@ void handler_fire_stanza(xmpp_conn_t *conn, xmpp_stanza_t *stanza)
             }
         }
     }
-
-    // handlerÅÉ·¢ĞÅÏ¢, »ØÍ·»á±éÀú²¢ÇÒÆ¥Åä
-    ns = xmpp_stanza_get_ns_ptr(stanza);
+    
+    // handleræ´¾å‘ä¿¡æ¯, å›å¤´ä¼šéå†å¹¶ä¸”åŒ¹é…
+    ns = xmpp_stanza_get_ns(stanza);
     name = xmpp_stanza_get_name_ptr(stanza);
     type = xmpp_stanza_get_type_ptr(stanza);
-
-    // ÆÕÍ¨handler
+    
+    // æ™®é€šhandler
     item = &conn->handlers;
     if (!list_empty(&item->dlist)) {
-        // ¼¤»î±¾´ÎÒªÔËĞĞµÄhandler£¬Ö®ºó¼ÓÈëµÄÏÂÒ»´ÎÊÂ¼ş¼¤»îµÄÊ±ºò²Å´¦Àí
+        // æ¿€æ´»æœ¬æ¬¡è¦è¿è¡Œçš„handlerï¼Œä¹‹ååŠ å…¥çš„ä¸‹ä¸€æ¬¡äº‹ä»¶æ¿€æ´»çš„æ—¶å€™æ‰å¤„ç†
         list_for_each(pos, &item->dlist) {
             pos_item = list_entry(pos, xmpp_handlist_t, dlist);
             pos_item->enabled = 1;
         }
-
-        // ¼¤»î»Øµ÷
+        
+        // æ¿€æ´»å›è°ƒ
         list_for_each_safe(pos, tmp, &item->dlist) {
             pos_item = list_entry(pos, xmpp_handlist_t, dlist);
-
-            // Ã»ÓĞµÇÂ¼µÄ»°²»µ÷ÓÃÓÃ»§µÄhandler
+            
+            // æ²¡æœ‰ç™»å½•çš„è¯ä¸è°ƒç”¨ç”¨æˆ·çš„handler
             if (!pos_item->enabled || (pos_item->user_handler && !conn->authenticated)) {
                 continue;
             }
-            // handlerÆ¥ÅäÌõ¼ş: ns name type Èç¹ûÓĞ¶¼ÒªÆ¥Åä
+            // handleråŒ¹é…æ¡ä»¶: ns name type å¦‚æœæœ‰éƒ½è¦åŒ¹é…
             if ((!pos_item->ns || (ns && strcmp(ns, pos_item->ns) == 0)
                  || xmpp_stanza_get_child_by_ns(stanza, pos_item->ns)) &&
                 (!pos_item->name || (name && strcmp(name, pos_item->name) == 0)) &&
@@ -101,12 +101,12 @@ void handler_reset_timed(xmpp_conn_t *conn, int user_only)
 {
     xmpp_handlist_t *item = NULL, *pos_item = NULL;
     struct list_head *pos;
-
+    
     item = &conn->timed_handlers;
     list_for_each(pos, &item->dlist) {
         pos_item = list_entry(pos, xmpp_handlist_t, dlist);
-
-        // Èç¹ûÉèÖÃÁËuser_only£¬ÔòÖ»ÖØÖÃÍâ²¿µÄ¼ÆÊ±Æ÷
+        
+        // å¦‚æœè®¾ç½®äº†user_onlyï¼Œåˆ™åªé‡ç½®å¤–éƒ¨çš„è®¡æ—¶å™¨
         if ((user_only && pos_item->user_handler) || !user_only) {
             evtimer_del(pos_item->evtimeout);
             evtimer_add(pos_item->evtimeout, &pos_item->period);
@@ -121,25 +121,25 @@ static void _timed_handler_add(xmpp_conn_t *conn,
 {
     xmpp_handlist_t *new_item = NULL, *head_item = NULL, *pos_item = NULL;
     struct list_head *pos = NULL;
-
-    // handlerÎ¨Ò»ĞÔ
+    
+    // handlerå”¯ä¸€æ€§
     head_item = &conn->timed_handlers;
     if (_check_handler_exist(head_item, handler)) {
         return;
     }
-
-    // ·ÖÅä
+    
+    // åˆ†é…
     new_item = xmpp_alloc(conn->ctx, sizeof(xmpp_handlist_t));
     if (!new_item)
         return;
-
+        
     new_item->conn = conn;
     new_item->user_handler = user_handler;
     new_item->handler = (void*)handler;
     new_item->userdata = userdata;
     new_item->enabled = 0;
-
-    // ÉèÖÃ¶¨Ê±Æ÷
+    
+    // è®¾ç½®å®šæ—¶å™¨
     memset(&new_item->period, 0, sizeof(new_item->period));
     new_item->period.tv_sec = period;
     new_item->evtimeout = event_new(conn->ctx->base, -1, EV_TIMEOUT | EV_PERSIST, _handler_timer_proxy,
@@ -149,8 +149,8 @@ static void _timed_handler_add(xmpp_conn_t *conn,
         return;
     }
     evtimer_add(new_item->evtimeout, &new_item->period);
-
-    // ¼ÓÈëÁ´±í
+    
+    // åŠ å…¥é“¾è¡¨
     INIT_LIST_HEAD(&(new_item->dlist));
     list_add_tail(&new_item->dlist, &head_item->dlist);
 }
@@ -159,7 +159,7 @@ void xmpp_timed_handler_delete(xmpp_conn_t *conn, xmpp_timed_handler handler)
 {
     xmpp_handlist_t *head_item = NULL, *pos_item = NULL;
     struct list_head *pos = NULL, *tmp = NULL;
-
+    
     head_item = &conn->timed_handlers;
     list_for_each_safe(pos, tmp, &head_item->dlist) {
         pos_item = list_entry(pos, xmpp_handlist_t, dlist);
@@ -173,8 +173,8 @@ void xmpp_timed_handler_delete(xmpp_conn_t *conn, xmpp_timed_handler handler)
 static void _handler_timed_free(xmpp_handlist_t *target)
 {
     list_del(&target->dlist);
-
-    // ÊÍ·Å¶¨Ê±Æ÷
+    
+    // é‡Šæ”¾å®šæ—¶å™¨
     evtimer_del(target->evtimeout);
     event_free(target->evtimeout);
     xmpp_free(target->conn->ctx, target);
@@ -188,39 +188,39 @@ static void _id_handler_add(xmpp_conn_t *conn,
 {
     xmpp_handlist_t *new_item = NULL, *head_item = NULL, *pos_item = NULL;
     struct list_head *pos = NULL;
-
-    // handlerÎ¨Ò»ĞÔ
+    
+    // handlerå”¯ä¸€æ€§
     head_item = (xmpp_handlist_t *)hash_get(conn->id_handlers, id);
     if (_check_handler_exist(head_item, handler)) {
         return;
     }
-
-    // ·ÖÅäĞÂµÄhandler
+    
+    // åˆ†é…æ–°çš„handler
     new_item = xmpp_alloc(conn->ctx, sizeof(xmpp_handlist_t));
     if (!new_item) return;
-
+    
     new_item->conn = conn;
     new_item->user_handler = user_handler;
     new_item->handler = (void *)handler;
     new_item->userdata = userdata;
     new_item->enabled = 0;
     INIT_LIST_HEAD(&new_item->dlist);
-
-    // ¸´ÖÆid×Ö·û´®
+    
+    // å¤åˆ¶idå­—ç¬¦ä¸²
     new_item->id = xmpp_strdup(conn->ctx, id);
     if (!new_item->id) {
         xmpp_free(conn->ctx, new_item);
         return;
     }
-
+    
     if (!head_item) {
-        // ¸ÃidÃ»ÓĞ±íÍ·¼Ç£¬¸øËû·ÖÅäÒ»¸ö
+        // è¯¥idæ²¡æœ‰è¡¨å¤´è®°ï¼Œç»™ä»–åˆ†é…ä¸€ä¸ª
         head_item = xmpp_alloc(conn->ctx, sizeof(xmpp_handlist_t));
         if (!head_item) {
             xmpp_free(conn->ctx, new_item);
             return;
         } else {
-            // Ìí¼Óid±íÍ·
+            // æ·»åŠ idè¡¨å¤´
             head_item->conn = conn;
             INIT_LIST_HEAD(&head_item->dlist);
             hash_add(conn->id_handlers, id, head_item);
@@ -233,13 +233,13 @@ void xmpp_id_handler_delete(xmpp_conn_t *conn, xmpp_handler handler, const char 
 {
     xmpp_handlist_t *head_item, *pos_item;
     struct list_head *pos;
-
+    
     head_item = (xmpp_handlist_t *)hash_get(conn->id_handlers, id);
     if (!head_item) return;
-
+    
     list_for_each(pos, &head_item->dlist) {
         pos_item = list_entry(pos, xmpp_handlist_t, dlist);
-
+        
         if (pos_item->handler == (void*)handler) {
             _handler_id_free(head_item, pos_item, id);
             return;
@@ -252,7 +252,7 @@ static void _handler_id_free(xmpp_handlist_t *head, xmpp_handlist_t *item, const
     xmpp_conn_t *conn = head->conn;
     xmpp_handlist_t *pos_item;
     struct list_head *pos = NULL, *tmp = NULL;
-
+    
     if (item == NULL) {
         list_for_each_safe(pos, tmp, &head->dlist) {
             pos_item = list_entry(pos, xmpp_handlist_t, dlist);
@@ -260,12 +260,12 @@ static void _handler_id_free(xmpp_handlist_t *head, xmpp_handlist_t *item, const
         }
     } else {
         list_del(&item->dlist);
-
+        
         if (list_empty(&head->dlist)) {
             hash_drop(conn->id_handlers, id);
             xmpp_free(conn->ctx, head);
         }
-
+        
         xmpp_free(conn->ctx, item->id);
         xmpp_free(conn->ctx, item);
     }
@@ -277,27 +277,27 @@ static void _handler_add(xmpp_conn_t *conn, xmpp_handler handler, const char *ns
 {
     xmpp_handlist_t *new_item = NULL, *head_item = NULL, *pos_item = NULL;
     struct list_head *pos = NULL;
-
-    // handlerÎ¨Ò»ĞÔ
+    
+    // handlerå”¯ä¸€æ€§
     head_item = &conn->handlers;
     if (_check_handler_exist(head_item, handler)) {
         return;
     }
-
+    
     new_item = (xmpp_handlist_t *)xmpp_alloc(conn->ctx, sizeof(xmpp_handlist_t));
     if (!new_item)
         return;
-
+        
     new_item->conn = conn;
     new_item->user_handler = user_handler;
     new_item->handler = (void *)handler;
     new_item->userdata = userdata;
     new_item->enabled = 0;
-
+    
     new_item->ns = NULL;
     new_item->name = NULL;
     new_item->type = NULL;
-
+    
     if (ns) {
         new_item->ns = xmpp_strdup(conn->ctx, ns);
         if (!new_item->ns) {
@@ -305,7 +305,7 @@ static void _handler_add(xmpp_conn_t *conn, xmpp_handler handler, const char *ns
             return;
         }
     }
-
+    
     if (name) {
         new_item->name = xmpp_strdup(conn->ctx, name);
         if (!new_item->name) {
@@ -314,7 +314,7 @@ static void _handler_add(xmpp_conn_t *conn, xmpp_handler handler, const char *ns
             return;
         }
     }
-
+    
     if (type) {
         new_item->type = xmpp_strdup(conn->ctx, type);
         if (!new_item->type) {
@@ -324,8 +324,8 @@ static void _handler_add(xmpp_conn_t *conn, xmpp_handler handler, const char *ns
             return;
         }
     }
-
-    // Èë±í
+    
+    // å…¥è¡¨
     head_item = &conn->handlers;
     INIT_LIST_HEAD(&new_item->dlist);
     list_add_tail(&new_item->dlist, &head_item->dlist);
@@ -335,11 +335,11 @@ void xmpp_handler_delete(xmpp_conn_t *conn, xmpp_handler handler)
 {
     xmpp_handlist_t *head_item = NULL, *pos_item = NULL;
     struct list_head *pos = NULL, *tmp = NULL;
-
+    
     head_item = &conn->handlers;
     list_for_each_safe(pos, tmp, &head_item->dlist) {
         pos_item = list_entry(pos, xmpp_handlist_t, dlist);
-
+        
         if (pos_item->handler == (void*)handler) {
             _handler_free(pos_item);
             return;
@@ -351,8 +351,8 @@ static void _handler_free(xmpp_handlist_t *target)
 {
     xmpp_ctx_t *ctx = target->conn->ctx;
     list_del(&target->dlist);
-
-    // ÊÍ·Å·ÖÅäµÄÖµ
+    
+    // é‡Šæ”¾åˆ†é…çš„å€¼
     if (target->ns)
         xmpp_free(ctx, target->ns);
     if (target->name)
@@ -370,15 +370,15 @@ void handler_clear_all(xmpp_conn_t *conn)
     struct list_head *pos = NULL, *tmp = NULL;
     hash_iterator_t *iter = NULL;
     const char *key = NULL;
-
-    // ÊÍ·Å¶¨Ê±Æ÷
+    
+    // é‡Šæ”¾å®šæ—¶å™¨
     head_item = &conn->timed_handlers;
     list_for_each_safe(pos, tmp, &head_item->dlist) {
         pos_item = list_entry(pos, xmpp_handlist_t, dlist);
         _handler_timed_free(pos_item);
     }
-
-    // ÊÍ·ÅËùÓĞµÄIDhandler, ÒÔ¼°hash±í
+    
+    // é‡Šæ”¾æ‰€æœ‰çš„IDhandler, ä»¥åŠhashè¡¨
     iter = hash_iter_new(conn->id_handlers);
     while ((key = hash_iter_next(iter))) {
         head_item = (xmpp_handlist_t *)hash_get(conn->id_handlers, key);
@@ -386,8 +386,8 @@ void handler_clear_all(xmpp_conn_t *conn)
     }
     hash_iter_release(iter);
     hash_release(conn->id_handlers);
-
-    // ÊÍ·ÅËùÓĞhandler
+    
+    // é‡Šæ”¾æ‰€æœ‰handler
     head_item = &conn->handlers;
     list_for_each_safe(pos, tmp, &head_item->dlist) {
         pos_item = list_entry(pos, xmpp_handlist_t, dlist);

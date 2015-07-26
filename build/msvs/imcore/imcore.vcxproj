@@ -55,6 +55,7 @@
       <CompileAs>Default</CompileAs>
       <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <DisableSpecificWarnings>4819</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -80,48 +81,52 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\src\base64.h" />
     <ClInclude Include="..\..\..\src\common.h" />
-    <ClInclude Include="..\..\..\src\imcore-inl.h" />
-    <ClInclude Include="..\..\..\src\imcore-thread.h" />
+    <ClInclude Include="..\..\..\src\im-msg-text.h" />
+    <ClInclude Include="..\..\..\src\im-msg.h" />
+    <ClInclude Include="..\..\..\src\im-thread.h" />
     <ClInclude Include="..\..\..\src\imcore.h" />
     <ClInclude Include="..\..\..\src\list.h" />
     <ClInclude Include="..\..\..\src\md5.h" />
-    <ClInclude Include="..\..\..\src\file-transfer.h" />
+    <ClInclude Include="..\..\..\src\im-msg-file.h" />
     <ClInclude Include="..\..\..\src\mm.h" />
     <ClInclude Include="..\..\..\src\random.h" />
-    <ClInclude Include="..\..\..\src\snprintf.h" />
     <ClInclude Include="..\..\..\src\sock.h" />
     <ClInclude Include="..\..\..\src\pthread-win32.h" />
     <ClInclude Include="..\..\..\src\srv.h" />
-    <ClInclude Include="..\..\..\src\xmpp-hash.h" />
+    <ClInclude Include="..\..\..\src\hash.h" />
+    <ClInclude Include="..\..\..\src\stringutils.h" />
     <ClInclude Include="..\..\..\src\xmpp-inl.h" />
+    <ClInclude Include="..\..\..\src\xmpp-oob.h" />
     <ClInclude Include="..\..\..\src\xmpp-parser.h" />
     <ClInclude Include="..\..\..\src\xmpp-sasl.h" />
     <ClInclude Include="..\..\..\src\xmpp.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\src\file-transfer-ibb.c" />
-    <ClCompile Include="..\..\..\src\imcore.c" />
-    <ClCompile Include="..\..\..\src\imcore-thread.c" />
+    <ClCompile Include="..\..\..\src\base64.c" />
+    <ClCompile Include="..\..\..\src\im-msg-text.c" />
+    <ClCompile Include="..\..\..\src\xmpp-oob.c" />
+    <ClCompile Include="..\..\..\src\im-session.c" />
+    <ClCompile Include="..\..\..\src\im-thread.c" />
     <ClCompile Include="..\..\..\src\md5.c" />
-    <ClCompile Include="..\..\..\src\file-transfer.c" />
+    <ClCompile Include="..\..\..\src\im-msg-file.c" />
     <ClCompile Include="..\..\..\src\mm.c" />
     <ClCompile Include="..\..\..\src\random.c" />
-    <ClCompile Include="..\..\..\src\snprintf.c" />
     <ClCompile Include="..\..\..\src\sock.c" />
     <ClCompile Include="..\..\..\src\pthread-win32.c" />
     <ClCompile Include="..\..\..\src\srv.c" />
+    <ClCompile Include="..\..\..\src\stringutils.c" />
     <ClCompile Include="..\..\..\src\xmpp-auth.c" />
     <ClCompile Include="..\..\..\src\xmpp-conn.c" />
     <ClCompile Include="..\..\..\src\xmpp-ctx.c" />
     <ClCompile Include="..\..\..\src\xmpp-handler.c" />
-    <ClCompile Include="..\..\..\src\xmpp-hash.c" />
+    <ClCompile Include="..\..\..\src\hash.c" />
     <ClCompile Include="..\..\..\src\xmpp-jid.c" />
     <ClCompile Include="..\..\..\src\xmpp-loop.c" />
     <ClCompile Include="..\..\..\src\xmpp-parser-expat.c" />
     <ClCompile Include="..\..\..\src\xmpp-sasl.c" />
     <ClCompile Include="..\..\..\src\xmpp-stanza.c" />
-    <ClCompile Include="..\..\..\src\xmpp-util.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

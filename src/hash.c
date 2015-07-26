@@ -1,10 +1,11 @@
-/*
- * hash.c hash��ʵ��
+﻿/*
+ * hash.c hash表实现
 */
-#include "xmpp-inl.h"
+#include "hash.h"
+#include "mm.h"
+#include "stringutils.h"
 
 typedef struct _hashentry_t hashentry_t;
-
 struct _hashentry_t {
     hashentry_t *next;
     char *key;
@@ -13,9 +14,8 @@ struct _hashentry_t {
 
 struct _hash_t {
     unsigned int ref;
-    xmpp_ctx_t *ctx;
     hash_free_func free;
-    int length;
+    int length;                         // hash槽的数量，越多性能越高，如果为1则退化成为链表
     int num_keys;
     hashentry_t **entries;
 };
@@ -27,19 +27,19 @@ struct _hash_iterator_t {
     int index;
 };
 
-hash_t *hash_new(xmpp_ctx_t * const ctx, const int size, hash_free_func free)
+// 如果不提供free函数，插入时如果key冲突将导致插入失败
+hash_t *hash_new(int size, hash_free_func free)
 {
     hash_t *result = NULL;
-    result = xmpp_alloc(ctx, sizeof(hash_t));
+    result = safe_mem_malloc(sizeof(hash_t), NULL);
     if (result != NULL) {
-        result->entries = xmpp_alloc(ctx, size * sizeof(hashentry_t *));
+        result->entries = safe_mem_calloc(size*sizeof(hashentry_t*), NULL);
         if (result->entries == NULL) {
-            xmpp_free(ctx, result);
+            safe_mem_free(result);
             return NULL;
         }
-        memset(result->entries, 0, size * sizeof(hashentry_t *));
+        
         result->length = size;
-        result->ctx = ctx;
         result->free = free;
         result->num_keys = 0;
         result->ref = 1;
@@ -47,17 +47,14 @@ hash_t *hash_new(xmpp_ctx_t * const ctx, const int size, hash_free_func free)
     return result;
 }
 
-/** obtain a new reference to an existing hash table */
-hash_t *hash_clone(hash_t * const table)
+hash_t *hash_clone(hash_t *table)
 {
     table->ref++;
     return table;
 }
 
-/** release a hash table that is no longer needed */
-void hash_release(hash_t * const table)
+void hash_release(hash_t *table)
 {
-    xmpp_ctx_t *ctx = table->ctx;
     hashentry_t *entry, *next;
     int i;
     if (table->ref > 1)
@@ -67,25 +64,24 @@ void hash_release(hash_t * const table)
             entry = table->entries[i];
             while (entry != NULL) {
                 next = entry->next;
-                xmpp_free(ctx, entry->key);
-                if (table->free) table->free(ctx, entry->value);
-                xmpp_free(ctx, entry);
+                safe_mem_free(entry->key);
+                if (table->free)
+                    table->free(entry->value);
+                safe_mem_free(entry);
                 entry = next;
             }
         }
-        xmpp_free(ctx, table->entries);
-        xmpp_free(ctx, table);
+        safe_mem_free(table->entries);
+        safe_mem_free(table);
     }
 }
 
-/** hash a key for our table lookup */
 static int _hash_key(hash_t *table, const char *key)
 {
     int hash = 0;
     int shift = 0;
     const char *c = key;
     while (*c != '\0') {
-        /* assume 32 bit ints */
         hash ^= ((int)*c++ << shift);
         shift += 8;
         if (shift > 24) shift = 0;
@@ -93,82 +89,86 @@ static int _hash_key(hash_t *table, const char *key)
     return hash % table->length;
 }
 
-/** add a key, value pair to a hash table.
- *  each key can appear only once; the value of any
- *  identical key will be replaced
- */
-int hash_add(hash_t *table, const char * const key, void *data)
+int hash_add(hash_t *table, const char *key, void *data)
 {
-    xmpp_ctx_t *ctx = table->ctx;
     hashentry_t *entry = NULL;
     int index = _hash_key(table, key);
-    /* drop existing entry, if any */
-    hash_drop(table, key);
-    /* allocate and fill a new entry */
-    entry = xmpp_alloc(ctx, sizeof(hashentry_t));
-    if (!entry) return -1;
-    entry->key = xmpp_strdup(ctx, key);
+    if (table->free) {
+        hash_drop(table, key);
+    } else {
+        // 没有指定释放函数，有冲突的话插入失败
+        if (!hash_get(table, key)) {
+            return -1;
+        }
+    }
+    
+    entry = safe_mem_calloc(sizeof(hashentry_t), NULL);
+    if (!entry)
+        return -1;
+        
+    entry->key = im_strndup(key, im_strlen(key));
     if (!entry->key) {
-        xmpp_free(ctx, entry);
+        safe_mem_free(entry);
         return -1;
     }
     entry->value = data;
-    /* insert ourselves in the linked list */
-    /* TODO: this leaks duplicate keys */
+    
     entry->next = table->entries[index];
     table->entries[index] = entry;
     table->num_keys++;
     return 0;
 }
 
-// ��ȡһ����ֵ
+// 获取一个键值
 void *hash_get(hash_t *table, const char *key)
 {
     hashentry_t *entry;
     int index = _hash_key(table, key);
     void *result = NULL;
-
+    
     entry = table->entries[index];
     while (entry != NULL) {
-        if (!strcmp(key, entry->key)) {
-            // ƥ��
+        if (!im_strcmp(key, entry->key)) {
+            // 匹配
             result = entry->value;
             return result;
         }
         entry = entry->next;
     }
-    // û��ƥ��
+    // 没有匹配
     return result;
 }
 
-// ɾ��һ����ֵ
 int hash_drop(hash_t *table, const char *key)
 {
-    xmpp_ctx_t *ctx = table->ctx;
     hashentry_t *entry, *prev;
     int index = _hash_key(table, key);
-
-    // entry��key����Ҫ�ͷ�
+    
+    // entry和key都需要释放
     entry = table->entries[index];
     prev = NULL;
-
+    
     while (entry != NULL) {
-        if (!strcmp(key, entry->key)) {
-            xmpp_free(ctx, entry->key);
-            if (table->free) table->free(ctx, entry->value);
+        if (!im_strcmp(key, entry->key)) {
+            safe_mem_free(entry->key);
+            // 自定义释放
+            if (table->free)
+                table->free(entry->value);
+                
             if (prev == NULL) {
                 table->entries[index] = entry->next;
             } else {
                 prev->next = entry->next;
             }
-            xmpp_free(ctx, entry);
+            
+            safe_mem_free(entry);
             table->num_keys--;
             return 0;
         }
         prev = entry;
         entry = entry->next;
     }
-    // û��ƥ��
+    // key不存在
     return -1;
 }
 
@@ -177,44 +177,39 @@ int hash_num_keys(hash_t *table)
     return table->num_keys;
 }
 
-/** allocate and initialize a new iterator */
 hash_iterator_t *hash_iter_new(hash_t *table)
 {
-    xmpp_ctx_t *ctx = table->ctx;
     hash_iterator_t *iter;
-    iter = xmpp_alloc(ctx, sizeof(*iter));
+    iter = safe_mem_malloc(sizeof(*iter), NULL);
     if (iter != NULL) {
         iter->ref = 1;
-        iter->table = hash_clone(table);
+        iter->table = hash_clone(table);          // 增加引用计数
         iter->entry = NULL;
         iter->index = -1;
     }
     return iter;
 }
 
-
-/** release an iterator that is no longer needed */
 void hash_iter_release(hash_iterator_t *iter)
 {
-    xmpp_ctx_t *ctx = iter->table->ctx;
     iter->ref--;
     if (iter->ref <= 0) {
         hash_release(iter->table);
-        xmpp_free(ctx, iter);
+        safe_mem_free(iter);
     }
 }
 
-/** return the next hash table key from the iterator.
-    the returned key should not be freed */
-const char * hash_iter_next(hash_iterator_t *iter)
+const char *hash_iter_next(hash_iterator_t *iter)
 {
     hash_t *table = iter->table;
     hashentry_t *entry = iter->entry;
     int i;
-    /* advance until we find the next entry */
-    if (entry != NULL) entry = entry->next;
+    
+    // 迭代出来的keyvalue数据的顺序是不确定的
+    if (entry != NULL)
+        entry = entry->next;
+        
     if (entry == NULL) {
-        /* we're off the end of list, search for a new entry */
         i = iter->index + 1;
         while (i < iter->table->length) {
             entry = table->entries[i];
@@ -226,10 +221,9 @@ const char * hash_iter_next(hash_iterator_t *iter)
         }
     }
     if (entry == NULL) {
-        /* no more keys! */
         return NULL;
     }
-    /* remember our current match */
+    
     iter->entry = entry;
     return entry->key;
 }

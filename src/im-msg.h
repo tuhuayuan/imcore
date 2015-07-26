@@ -4,7 +4,7 @@
 #include "imcore.h"
 #include "common.h"
 
-// 基本信息定义
+// 鍩烘湰淇℃伅瀹氫箟
 struct im_msg {
     uint64_t id;
     char *form;

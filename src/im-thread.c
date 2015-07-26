@@ -1,4 +1,4 @@
-#include "imcore-thread.h"
+#include "im-thread.h"
 
 #include <assert.h>
 #include <event2/event.h>
@@ -8,7 +8,7 @@
 #include "list.h"
 #include "mm.h"
 
-// �̱߳��ر��������ڱ���struct im_threadָ��
+// 线程本地变量，用于保存struct im_thread指针
 #ifdef WIN32
 DWORD thread_key_;
 #endif
@@ -16,22 +16,19 @@ DWORD thread_key_;
 pthread_key_t thread_key_;
 #endif
 
-// �߳���Ϣ
+// 线程消息
 typedef struct im_thread_msg {
     int msg_id;
-    im_thread_cb handler;
+    im_thread_msg_handler handler;
     void *userdata;
     struct event *pos_ev;
     struct list_head msg_node;
 } im_thread_msg_t;
 
-// �߳̽ṹ
+// 线程结构
 struct im_thread {
     bool wraped;
     bool started;
-    bool release_on_end;
-    bool loop_stop;
-    im_thread_runnable runnable;
     void *userdata;
 #ifdef POSIX
     pthread_t thread_handle;
@@ -41,18 +38,58 @@ struct im_thread {
     HANDLE thread_handle;
     HANDLE signal;
 #endif
-    // ÿ���߳�ӵ��һ��eventbase
+    // 每个线程拥有一个eventbase
     struct event_base *base;
-    // ����������Ϣ�б�
+    // 待处理的消息列表
     struct list_head msg_head;
-    // �߳���
-    im_thread_mutex_t *mutex;
-
+    // 线程锁
+    im_thread_mutex_t *m_lock;
+    
 };
+
+static void _im_thread_msg_free(im_thread_t *t)
+{
+    im_thread_mutex_lock(t->m_lock);
+    
+    struct list_head *pos, *tmp;
+    if (!list_empty(&t->msg_head)) {
+        list_for_each_safe(pos, tmp, &t->msg_head) {
+            im_thread_msg_t *msg = list_entry(pos, im_thread_msg_t, msg_node);
+            list_del(pos);
+            event_free(msg->pos_ev);
+            safe_mem_free(msg);
+        }
+    }
+    
+    im_thread_mutex_unlock(t->m_lock);
+}
+
+static void _im_thread_free(im_thread_t *t)
+{
+    // 释放消息队列
+    _im_thread_msg_free(t);
+    
+    // 释放event_base
+    event_base_free(t->base);
+    
+    // 释放信号
+#ifdef WIN32
+    CloseHandle(t->signal);
+#endif
+#ifdef POSIX
+    pthread_cond_destroy(t->signal);
+#endif
+    
+    // 释放锁
+    im_thread_mutex_destroy(t->m_lock);
+    
+    // 释放内存
+    safe_mem_free(t);
+}
 
 void im_thread_init()
 {
-    // libevent���߳̿�Ҳ��Ҫ��ʼ��
+    // libevent的线程库也需要初始化
 #ifdef WIN32
     evthread_use_windows_threads();
     thread_key_ = TlsAlloc();
@@ -73,31 +110,18 @@ void im_thread_destroy()
 #endif
 }
 
-static void _im_thread_msg_free(im_thread_t *t)
-{
-    im_thread_mutex_lock(t->mutex);
-    struct list_head *pos, *tmp;
-    if (!list_empty(&t->msg_head)) {
-        list_for_each_safe(pos, tmp, &t->msg_head) {
-            im_thread_msg_t *msg = list_entry(pos, im_thread_msg_t, msg_node);
-            list_del(pos);
-            event_free(msg->pos_ev);
-            safe_mem_free(msg);
-        }
-    }
-    im_thread_mutex_unlock(t->mutex);
-}
+
 
 im_thread_t *im_thread_new()
 {
     im_thread_t *t = safe_mem_calloc(sizeof(im_thread_t), NULL);
     if (t) {
-        t->mutex = im_thread_mutex_create();
-        if (!t->mutex) {
+        t->m_lock = im_thread_mutex_create();
+        if (!t->m_lock) {
             safe_mem_free(t);
             return NULL;
         }
-
+        
         int ret = 0;
 #ifdef WIN32
         t->signal = CreateEvent(NULL, FALSE, FALSE, NULL);
@@ -109,11 +133,11 @@ im_thread_t *im_thread_new()
         ret = pthread_cond_init(t->signal, NULL);
 #endif
         if (ret != 0) {
-            im_thread_mutex_destroy(t->mutex);
+            im_thread_mutex_destroy(t->m_lock);
             safe_mem_free(t);
             return NULL;
         }
-
+        
         t->base = event_base_new();
         if (t->base == NULL) {
 #ifdef WIN32
@@ -122,7 +146,7 @@ im_thread_t *im_thread_new()
 #ifdef POSIX
             pthread_cond_destroy(t->signal);
 #endif
-            im_thread_mutex_destroy(t->mutex);
+            im_thread_mutex_destroy(t->m_lock);
             safe_mem_free(t);
             return NULL;
         }
@@ -131,15 +155,13 @@ im_thread_t *im_thread_new()
     return t;
 }
 
-void im_thread_quit(im_thread_t *t)
+void im_thread_break()
 {
-    t->loop_stop = true;
-    event_base_loopbreak(t->base);
-}
-
-bool im_thread_is_quit(im_thread_t *t)
-{
-    return t->loop_stop;
+    // 只能对当前线程调用
+    im_thread_t *current = im_thread_current();
+    if (current) {
+        event_base_loopbreak(current->base);
+    }
 }
 
 bool im_thread_is_current(im_thread_t *t)
@@ -152,26 +174,30 @@ bool im_thread_is_current(im_thread_t *t)
 
 void im_thread_stop(im_thread_t *t)
 {
-    im_thread_quit(t);
-    im_thread_join(t);
+    // 不能在当前线程调用
+    assert(!im_thread_is_current(t));
+    if (t->started && !im_thread_is_current(t)) {
+        // 安全拔出
+        event_base_loopexit(t->base, NULL);
+        
+        // 阻塞等待循环退出
+        im_thread_join(t);
+    }
 }
 
 void im_thread_free(im_thread_t *t)
 {
-    if (!t->wraped) {
+    // 不应该对包装的线程调用free,请调用unwrap.
+    assert(!t->wraped);
+    // 不应该对当前线程调用
+    assert(!im_thread_is_current(t));
+    
+    if (!t->wraped && !im_thread_is_current(t)) {
+        // 安全停止
         im_thread_stop(t);
+        // 释放
+        _im_thread_free(t);
     }
-
-    _im_thread_msg_free(t);
-    event_base_free(t->base);
-#ifdef WIN32
-    CloseHandle(t->signal);
-#endif
-#ifdef POSIX
-    pthread_cond_destroy(t->signal);
-#endif
-    im_thread_mutex_destroy(t->mutex);
-    safe_mem_free(t);
 }
 
 im_thread_t *im_thread_current()
@@ -223,16 +249,17 @@ void im_thread_unwrap_current()
     im_thread_t *current = im_thread_current();
     if (current && current->wraped) {
         _im_thread_set_current(NULL);
-
+        
         im_thread_free(current);
     }
 }
 
 void im_thread_join(im_thread_t *t)
 {
-    if (t->started) {
-        assert(!im_thread_is_current(t));
-
+    // 不允许在当前线程调用当前线程的join
+    assert(!im_thread_is_current(t));
+    if (t->started && !im_thread_is_current(t)) {
+    
 #ifdef WIN32
         WaitForSingleObject(t->thread_handle, INFINITE);
         CloseHandle(t->thread_handle);
@@ -248,35 +275,36 @@ void im_thread_join(im_thread_t *t)
 
 static void _im_thread_loop(im_thread_t *t)
 {
-    while(!t->loop_stop) {
-        event_base_loop(t->base, EVLOOP_ONCE);
-    }
+    event_base_dispatch(t->base);
 }
 
 static void *_im_thread_runnable_proxy(im_thread_t *running)
 {
     _im_thread_set_current(running);
-    if (running->runnable) {
-        running->runnable(running->userdata);
-    } else {
-        _im_thread_loop(running);
-    }
+    _im_thread_loop(running);
+    
+    // 这里是为了兼容pthread的回调原型
     return NULL;
 }
 
-bool im_thread_start(im_thread_t *t, im_thread_runnable runnable, void *userdata)
+bool im_thread_start(im_thread_t *t, void *userdata)
 {
-    if (t->started || t->wraped)
+    // 进入共享区域
+    im_thread_mutex_lock(t->m_lock);
+    
+    // 不能对当前线程或者已经启动的线程调用start
+    assert(!t->started);
+    assert(!im_thread_is_current(t));
+    
+    if (t->started || im_thread_is_current(t))
         return false;
-
+        
     t->userdata = userdata;
-    t->runnable = runnable;
-
 #ifdef WIN32
-    // Ĭ�϶�ջ��С
+    // 默认堆栈大小
     t->thread_handle =
         CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)_im_thread_runnable_proxy, t, 0, NULL);
-
+        
     if (t->thread_handle != NULL) {
         t->started = true;
     }
@@ -287,17 +315,19 @@ bool im_thread_start(im_thread_t *t, im_thread_runnable runnable, void *userdata
         t->started = true;
     }
 #endif
+    // 退出共享区域
+    im_thread_mutex_unlock(t->m_lock);
     return t->started;
 }
 
-void im_thread_run(im_thread_t *t)
+int im_thread_run(void *userdata)
 {
-    if (t->wraped) {
-        _im_thread_loop(t);
-    } else {
-        im_thread_start(t, NULL, NULL);
-        im_thread_join(t);
+    im_thread_t *current = im_thread_current();
+    if (current && current->wraped) {
+        _im_thread_loop(current);
+        return 0;
     }
+    return -1;
 }
 
 static void _im_thread_post_proxy(evutil_socket_t fd, short what, void *arg)
@@ -305,17 +335,17 @@ static void _im_thread_post_proxy(evutil_socket_t fd, short what, void *arg)
     im_thread_msg_t *msg = arg;
     msg->handler(msg->msg_id, msg->userdata);
     im_thread_t *current = im_thread_current();
-
-    // �̰߳�ȫֻ��֤��Ϣ���е�����ɾ���ǰ�ȫ��
-    im_thread_mutex_lock(current->mutex);
+    
+    // 线程安全
+    im_thread_mutex_lock(current->m_lock);
     list_del(&msg->msg_node);
-    im_thread_mutex_unlock(current->mutex);
-
+    im_thread_mutex_unlock(current->m_lock);
+    
     event_free(msg->pos_ev);
     safe_mem_free(msg);
 }
 
-void im_thread_post(im_thread_t *sink, int msg_id, im_thread_cb handler, long milliseconds,
+void im_thread_post(im_thread_t *sink, int msg_id, im_thread_msg_handler handler, long milliseconds,
                     void *userdata)
 {
     if (!sink && !(sink = im_thread_current())) {
@@ -332,16 +362,16 @@ void im_thread_post(im_thread_t *sink, int msg_id, im_thread_cb handler, long mi
         msg->msg_id = msg_id;
         msg->userdata = userdata;
         msg->pos_ev = pos_ev;
-
-        // �̰߳�ȫֻ��֤��Ϣ���е�����ɾ���ǰ�ȫ��
-        im_thread_mutex_lock(sink->mutex);
+        
+        // 线程安全
+        im_thread_mutex_lock(sink->m_lock);
         list_add(&msg->msg_node, &sink->msg_head);
-        im_thread_mutex_unlock(sink->mutex);
-
+        im_thread_mutex_unlock(sink->m_lock);
+        
         struct timeval ts;
         ts.tv_sec = milliseconds / 1000;
         ts.tv_usec = (milliseconds % 1000) * 1000;
-
+        
         event_add(pos_ev, &ts);
     }
 }
@@ -357,16 +387,16 @@ static void _im_thread_send_proxy(evutil_socket_t fd, short what, void *arg)
 #ifdef POSIX
     pthread_cond_signal(current->signal);
 #endif
-    // �̰߳�ȫֻ��֤��Ϣ���е�����ɾ���ǰ�ȫ��
-    im_thread_mutex_lock(current->mutex);
+    // 线程安全只保证消息队列的添加删除是安全的
+    im_thread_mutex_lock(current->m_lock);
     list_del(&msg->msg_node);
-    im_thread_mutex_unlock(current->mutex);
-
+    im_thread_mutex_unlock(current->m_lock);
+    
     event_free(msg->pos_ev);
     safe_mem_free(msg);
 }
 
-void im_thread_send(im_thread_t *sink, int msg_id, im_thread_cb handler, void *userdata)
+void im_thread_send(im_thread_t *sink, int msg_id, im_thread_msg_handler handler, void *userdata)
 {
     if (!sink && !(sink = im_thread_current())) {
         return;
@@ -385,22 +415,22 @@ void im_thread_send(im_thread_t *sink, int msg_id, im_thread_cb handler, void *u
             msg->msg_id = msg_id;
             msg->userdata = userdata;
             msg->pos_ev = pos_ev;
-
-            // �̰߳�ȫֻ��֤��Ϣ���е�����ɾ���ǰ�ȫ��
-            im_thread_mutex_lock(sink->mutex);
+            
+            // 线程安全只保证消息队列的添加删除是安全的
+            im_thread_mutex_lock(sink->m_lock);
             list_add(&msg->msg_node, &sink->msg_head);
-            im_thread_mutex_unlock(sink->mutex);
-
+            im_thread_mutex_unlock(sink->m_lock);
+            
             struct timeval ts;
             ts.tv_sec = 0;
             ts.tv_usec = 0;
-
+            
             event_add(pos_ev, &ts);
 #ifdef WIN32
             WaitForSingleObject(sink->signal, INFINITE);
 #endif
 #ifdef POSIX
-            pthread_cond_wait(sink->signal, sink->mutex);
+            pthread_cond_wait(sink->signal, sink->m_lock);
 #endif
         }
     }
@@ -408,7 +438,20 @@ void im_thread_send(im_thread_t *sink, int msg_id, im_thread_cb handler, void *u
 
 struct event_base *im_thread_get_eventbase(im_thread_t *t)
 {
-    return t->base;
+    im_thread_t *current = t ? t : im_thread_current();
+    if (current) {
+        return current->base;
+    }
+    return NULL;
+}
+
+void *im_thread_get_userdata(im_thread_t *t)
+{
+    im_thread_t *current = t ? t : im_thread_current();
+    if (current) {
+        return current->userdata;
+    }
+    return NULL;
 }
 
 struct im_thread_mutex {
@@ -423,9 +466,9 @@ struct im_thread_mutex {
 im_thread_mutex_t * im_thread_mutex_create()
 {
     im_thread_mutex_t *mutex;
-
+    
     mutex = (im_thread_mutex_t*)safe_mem_malloc(sizeof(im_thread_mutex_t), NULL);
-
+    
     if (mutex) {
 #ifdef WIN32
         mutex->mutex_handler = CreateMutex(NULL, FALSE, NULL);
@@ -444,7 +487,7 @@ im_thread_mutex_t * im_thread_mutex_create()
             mutex = NULL;
         }
     }
-
+    
     return mutex;
 }
 
