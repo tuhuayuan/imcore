@@ -8,13 +8,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "sock.h"
+
 #ifdef POSIX
 #include <pthread.h>
-#endif
-
-#ifdef WIN32
-#include <winsock2.h>
-#include <windows.h>
 #endif
 
 #ifdef __cplusplus
@@ -140,8 +137,8 @@ void im_thread_join(im_thread_t *t);
 bool im_thread_sleep(int milliseconds);
 
 /**
- * @brief 消息处理函数		
- * 
+ * @brief 消息处理函数
+ *
  * @param b 消息id
  * @param userdata 自定义数据
  *
@@ -160,7 +157,7 @@ typedef void(*im_thread_msg_handler)(int msg_id, void *userdata);
  */
 void im_thread_post(im_thread_t *sink, int msg_id, im_thread_msg_handler handler, long milliseconds,
                     void *userdata);
-                    
+
 /**
  * @brief SEND一个消息给指定线程
  * @details 等同于window的send消息, 调用会阻塞到指定线程执行完消息处理函数返回
@@ -174,7 +171,7 @@ void im_thread_send(im_thread_t *sink, int msg_id, im_thread_msg_handler handler
 
 /**
  * @brief 获取线程的even_base
- * 
+ *
  * @param t 线程指针或者NULL
  * @return event_base* 或者 NULL
  */
@@ -182,7 +179,7 @@ struct event_base *im_thread_get_eventbase(im_thread_t *t);
 
 /**
  * @brief 获取线程的自定义数据
- * 
+ *
  * @param t 线程指针或者NULL
  * @return 或者 NULL
  */
@@ -201,7 +198,7 @@ im_thread_mutex_t *im_thread_mutex_create();
 
 /**
  * @brief 销毁一个mutex
- * @param mutex 
+ * @param mutex
  * @return 0 表示正常
  */
 int im_thread_mutex_destroy(im_thread_mutex_t *mutex);
@@ -210,7 +207,7 @@ int im_thread_mutex_destroy(im_thread_mutex_t *mutex);
  * @brief 获取锁
  * @details 获取成功则返回并且独占锁, 或者一个等待
  *
- * @param mutex 
+ * @param mutex
  * @return 0 表示正常
  */
 int im_thread_mutex_lock(im_thread_mutex_t *mutex);
@@ -218,7 +215,7 @@ int im_thread_mutex_lock(im_thread_mutex_t *mutex);
 /**
  * @brief 释放锁
  *
- * @param mutex 
+ * @param mutex
  * @return 0 表示正常
  */
 int im_thread_mutex_unlock(im_thread_mutex_t *mutex);

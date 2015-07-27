@@ -37,7 +37,7 @@ xmpp_log_t *xmpp_get_default_logger(xmpp_log_level_t level)
 {
     if (level > XMPP_LEVEL_ERROR) level = XMPP_LEVEL_ERROR;
     if (level < XMPP_LEVEL_DEBUG) level = XMPP_LEVEL_DEBUG;
-    
+
     return (xmpp_log_t*)&_xmpp_default_loggers[level];
 }
 static xmpp_log_t xmpp_default_log = { NULL, NULL };
@@ -49,7 +49,7 @@ void xmpp_log(const xmpp_ctx_t *ctx, xmpp_log_level_t level, const char *area, c
     char smbuf[1024];
     char *buf;
     va_list copy;
-    
+
     va_copy(copy, ap);
     ret = im_vsnprintf(smbuf, sizeof(smbuf), fmt, ap);
     if (ret >= (int)sizeof(smbuf)) {
@@ -72,10 +72,10 @@ void xmpp_log(const xmpp_ctx_t *ctx, xmpp_log_level_t level, const char *area, c
         buf = smbuf;
     }
     va_end(copy);
-    
+
     if (ctx->log->handler)
         ctx->log->handler(ctx->log->userdata, level, area, buf);
-        
+
     if (buf != smbuf)
         xmpp_free(ctx, buf);
 }
@@ -84,7 +84,7 @@ void xmpp_log(const xmpp_ctx_t *ctx, xmpp_log_level_t level, const char *area, c
 void xmpp_error(const xmpp_ctx_t *ctx, const char *area, const char *fmt, ...)
 {
     va_list ap;
-    
+
     va_start(ap, fmt);
     xmpp_log(ctx, XMPP_LEVEL_ERROR, area, fmt, ap);
     va_end(ap);
@@ -93,7 +93,7 @@ void xmpp_error(const xmpp_ctx_t *ctx, const char *area, const char *fmt, ...)
 void xmpp_warn(const xmpp_ctx_t *ctx, const char *area, const char *fmt, ...)
 {
     va_list ap;
-    
+
     va_start(ap, fmt);
     xmpp_log(ctx, XMPP_LEVEL_WARN, area, fmt, ap);
     va_end(ap);
@@ -102,7 +102,7 @@ void xmpp_warn(const xmpp_ctx_t *ctx, const char *area, const char *fmt, ...)
 void xmpp_info(const xmpp_ctx_t *ctx, const char *area, const char *fmt, ...)
 {
     va_list ap;
-    
+
     va_start(ap, fmt);
     xmpp_log(ctx, XMPP_LEVEL_INFO, area, fmt, ap);
     va_end(ap);
@@ -111,42 +111,51 @@ void xmpp_info(const xmpp_ctx_t *ctx, const char *area, const char *fmt, ...)
 void xmpp_debug(const xmpp_ctx_t *ctx, const char *area, const char *fmt, ...)
 {
     va_list ap;
-    
+
     va_start(ap, fmt);
     xmpp_log(ctx, XMPP_LEVEL_DEBUG, area, fmt, ap);
     va_end(ap);
 }
 
 
-xmpp_ctx_t *xmpp_ctx_new(const xmpp_log_t *log)
+xmpp_ctx_t *xmpp_ctx_new(im_thread_t *work_thread, const xmpp_log_t *log)
 {
     xmpp_ctx_t *ctx = NULL;
     ctx = safe_mem_malloc(sizeof(xmpp_ctx_t), NULL);
-    
+
     if (ctx != NULL) {
         if (log == NULL)
             ctx->log = &xmpp_default_log;
         else
             ctx->log = log;
-            
-        // 初始化eventbase
-        ctx->base = event_base_new();
-        
+
+        ctx->base = im_thread_get_eventbase(work_thread);
+
         // 初始化SSL上下文
         ctx->ssl_ctx = SSL_CTX_new(TLS_client_method());
         ctx->loop_status = XMPP_LOOP_NOTSTARTED;
     }
-    
+
     return ctx;
 }
 
 void xmpp_ctx_free(xmpp_ctx_t *ctx)
 {
-    event_base_free(ctx->base);
     SSL_CTX_free(ctx->ssl_ctx);
     xmpp_free(ctx, ctx);
 }
 
+/**
+ * @fn	void xmpp_hash_free(void* p)
+ *
+ * @brief	XMPP库里面通用的hash值释放处理器.
+ * 			全部都是char*指针,直接free即可.
+ *
+ * @author	Huayuan
+ * @date	2015/7/27
+ *
+ * @param [in]	p	hash表释放时或者值被覆盖时需要释放的value
+ */
 void xmpp_hash_free(void* p)
 {
     safe_mem_free(p);

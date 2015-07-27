@@ -55,7 +55,7 @@ xmpp_log_t *xmpp_get_default_logger(xmpp_log_level_t level);
 
 // 上下文对象
 typedef struct _xmpp_ctx_t xmpp_ctx_t;
-xmpp_ctx_t *xmpp_ctx_new(const xmpp_log_t *log);
+xmpp_ctx_t *xmpp_ctx_new(im_thread_t *workthread, const xmpp_log_t *log);
 void xmpp_ctx_free(xmpp_ctx_t *ctx);
 
 //连接类型
@@ -131,7 +131,7 @@ typedef void(*xmpp_conn_handler)(xmpp_conn_t *conn,
                                  xmpp_conn_event_t state, int error,
                                  xmpp_stream_error_t *stream_error,
                                  void *userdata);
-                                 
+
 // 连接管理
 int xmpp_connect_client(xmpp_conn_t *conn,
                         const char *altdomain,

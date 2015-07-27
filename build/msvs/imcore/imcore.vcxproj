@@ -106,8 +106,9 @@
   <ItemGroup>
     <ClCompile Include="..\..\..\src\base64.c" />
     <ClCompile Include="..\..\..\src\im-msg-text.c" />
+    <ClCompile Include="..\..\..\src\imcore.c" />
     <ClCompile Include="..\..\..\src\xmpp-oob.c" />
-    <ClCompile Include="..\..\..\src\im-session.c" />
+    <ClCompile Include="..\..\..\src\im-conn.c" />
     <ClCompile Include="..\..\..\src\im-thread.c" />
     <ClCompile Include="..\..\..\src\md5.c" />
     <ClCompile Include="..\..\..\src\im-msg-file.c" />
@@ -127,6 +128,9 @@
     <ClCompile Include="..\..\..\src\xmpp-parser-expat.c" />
     <ClCompile Include="..\..\..\src\xmpp-sasl.c" />
     <ClCompile Include="..\..\..\src\xmpp-stanza.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\src\im-msg.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
