@@ -1,7 +1,7 @@
 /**
  * @file	src\im-msg.h
  *
- * @brief	ÉùÃ÷³éÏóÏûÏ¢½á¹¹,ÒÔ¼°²Ù×÷·½·¨.
+ * @brief	å£°æ˜æŠ½è±¡æ¶ˆæ¯ç»“æ„,ä»¥åŠæ“ä½œæ–¹æ³•.
  */
 #ifndef __IMCORE_MSG_H__
 #define __IMCORE_MSG_H__
@@ -12,62 +12,62 @@
 /**
  * @typedef	void(*im_msg_free_imp)(im_msg_t *msg)
  *
- * @brief	ÏûÏ¢ÊÍ·ÅĞéº¯Êı
+ * @brief	æ¶ˆæ¯é‡Šæ”¾è™šå‡½æ•°
  */
 typedef void(*im_msg_free_imp)(im_msg_t *msg);
 
 /**
  * @typedef	void(*im_msg_send_imp)(im_msg_t *msg, im_conn_send_cb cb, bool receipt, void *userdata)
  *
- * @brief	ÏûÏ¢·¢ËÍĞéº¯Êı
+ * @brief	æ¶ˆæ¯å‘é€è™šå‡½æ•°
  */
 typedef void(*im_msg_send_imp)(im_msg_t *msg, im_conn_send_cb cb, bool receipt, void *userdata);
 
 /**
  * @struct	im_msg
  *
- * @brief	³éÏóÏûÏ¢½á¹¹Ìå£¬Ìá¹©ÁËÃ¿¸ö¾ßÌåÀàĞÍÏûÏ¢µÄ¹²Ïí×Ö¶Î.
+ * @brief	æŠ½è±¡æ¶ˆæ¯ç»“æ„ä½“ï¼Œæä¾›äº†æ¯ä¸ªå…·ä½“ç±»å‹æ¶ˆæ¯çš„å…±äº«å­—æ®µ.
  *
  * @author	Huayuan
  * @date	2015/7/27
  */
 struct im_msg {
-    /** @brief	64Î»ÕûĞÎÎ¨Ò»id. */
+    /** @brief	64ä½æ•´å½¢å”¯ä¸€id. */
     uint64_t id;
-    /** @brief	ÏûÏ¢À´Ô´. */
+    /** @brief	æ¶ˆæ¯æ¥æº. */
     char *from;
-    /** @brief	ÏûÏ¢Ä¿µÄµØ. */
+    /** @brief	æ¶ˆæ¯ç›®çš„åœ°. */
     char *to;
-    /** @brief	ÏûÏ¢ÀàĞÍ×Ö·û´®ÀıÈç "text" "image" "voice" "blob". */
+    /** @brief	æ¶ˆæ¯ç±»å‹å­—ç¬¦ä¸²ä¾‹å¦‚ "text" "image" "voice" "blob". */
     char *type;
-    /** @brief	ÏûÏ¢´´½¨µÄÊ±¼ä, ²¢·Ç·şÎñÆ÷Ê±¼ä. */
+    /** @brief	æ¶ˆæ¯åˆ›å»ºçš„æ—¶é—´, å¹¶éæœåŠ¡å™¨æ—¶é—´. */
     time_t createtime;
-    /** @brief	ÏûÏ¢¶ÔÓÚµÄÁ¬½Ó. */
+    /** @brief	æ¶ˆæ¯å¯¹äºçš„è¿æ¥. */
     im_conn_t *conn;
-    /** @brief	ÏûÏ¢ÒıÓÃ¼ÆÊı. */
+    /** @brief	æ¶ˆæ¯å¼•ç”¨è®¡æ•°. */
     int ref;
-    /** @brief	freeĞéº¯ÊıÖ¸Õë */
+    /** @brief	freeè™šå‡½æ•°æŒ‡é’ˆ */
     im_msg_free_imp free_imp;
-    /** @brief	sendĞéº¯ÊıÖ¸Õë */
+    /** @brief	sendè™šå‡½æ•°æŒ‡é’ˆ */
     im_msg_send_imp send_imp;
 };
 
 /**
  * @fn	im_msg_t *im_msg_new(im_conn_t *conn, const char *from, const char *to, const char *type, im_msg_free_imp free_imp, im_msg_send_imp send_imp);
  *
- * @brief	ĞÂ½¨Ò»¸öÏûÏ¢¶ÔÏó, ¸ÄÏûÏ¢¶ÔÏóÒıÓÃ¼ÆÊıÎª1.
+ * @brief	æ–°å»ºä¸€ä¸ªæ¶ˆæ¯å¯¹è±¡, æ¶ˆæ¯å¯¹è±¡å¼•ç”¨è®¡æ•°ä¸º1.
  *
  * @author	Huayuan
  * @date	2015/7/27
  *
- * @param [in]	conn	ÏûÏ¢ËùÊôµÄIMÁ¬½Ó.
- * @param	from			ÏûÏ¢À´Ô´.
- * @param	to				ÏûÏ¢Ä¿µÄµØ.
- * @param	type			ÏûÏ¢ÀàĞÍ.
- * @param	free_imp		ÊÍ·ÅÊµÏÖº¯ÊıÖ¸Õë
- * @param	send_imp		·¢ËÍº¯ÊıÊµÏÖÖ¸Õë
+ * @param [in]	conn	æ¶ˆæ¯æ‰€å±çš„IMè¿æ¥.
+ * @param	from			æ¶ˆæ¯æ¥æº.
+ * @param	to				æ¶ˆæ¯ç›®çš„åœ°.
+ * @param	type			æ¶ˆæ¯ç±»å‹.
+ * @param	free_imp		é‡Šæ”¾å®ç°å‡½æ•°æŒ‡é’ˆ
+ * @param	send_imp		å‘é€å‡½æ•°å®ç°æŒ‡é’ˆ
  *
- * @return	·µ»Ø´´½¨µÄÖ¸Õë, »òÕß NULL.
+ * @return	è¿”å›åˆ›å»ºçš„æŒ‡é’ˆ, æˆ–è€… NULL.
  */
 im_msg_t *im_msg_new(im_conn_t *conn,
                      const char *from, const char *to, const char *type,
@@ -77,18 +77,18 @@ im_msg_t *im_msg_new(im_conn_t *conn,
 /**
  * @fn	void im_msg_init(im_msg_t *msg, im_conn_t *conn, const char *from, const char *to, const char *type, im_msg_free_imp free_imp, im_msg_send_imp send_imp);
  *
- * @brief	³õÊ¼»¯ÏûÏ¢¶ÔÏó, ÏûÏ¢¶ÔÏóÒıÓÃ¼ÆÊıÉèÖÃ1.
+ * @brief	åˆå§‹åŒ–æ¶ˆæ¯å¯¹è±¡, æ¶ˆæ¯å¯¹è±¡å¼•ç”¨è®¡æ•°è®¾ç½®1.
  *
  * @author	Huayuan
  * @date	2015/7/27
  *
- * @param [in]	msg 	ÏûÏ¢¶ÔÏóÖ¸Õë.
- * @param [in]	conn	ÏûÏ¢ËùÊôµÄIMÁ¬½Ó.
- * @param	from			ÏûÏ¢À´Ô´.
- * @param	to				ÏûÏ¢Ä¿µÄµØ.
- * @param	type			ÏûÏ¢ÀàĞÍ.
- * @param	free_imp		ÊÍ·ÅÊµÏÖº¯ÊıÖ¸Õë
- * @param	send_imp		·¢ËÍº¯ÊıÊµÏÖÖ¸Õë
+ * @param [in]	msg 	æ¶ˆæ¯å¯¹è±¡æŒ‡é’ˆ.
+ * @param [in]	conn	æ¶ˆæ¯æ‰€å±çš„IMè¿æ¥.
+ * @param	from			æ¶ˆæ¯æ¥æº.
+ * @param	to				æ¶ˆæ¯ç›®çš„åœ°.
+ * @param	type			æ¶ˆæ¯ç±»å‹.
+ * @param	free_imp		é‡Šæ”¾å®ç°å‡½æ•°æŒ‡é’ˆ
+ * @param	send_imp		å‘é€å‡½æ•°å®ç°æŒ‡é’ˆ
  */
 
 void im_msg_init(im_msg_t *msg, im_conn_t *conn,
@@ -99,12 +99,12 @@ void im_msg_init(im_msg_t *msg, im_conn_t *conn,
 /**
  * @fn	void im_msg_destroy(im_msg_t *msg);
  *
- * @brief	·´³õÊ¼»¯ÏûÏ¢¶ÔÏó, ÒıÓÃ¼ÆÊı-1.(×¢Òâ:ÕâÀï²»ÊÍ·Å)
+ * @brief	ååˆå§‹åŒ–æ¶ˆæ¯å¯¹è±¡, å¼•ç”¨è®¡æ•°-1.(æ³¨æ„:è¿™é‡Œä¸é‡Šæ”¾)
  *
  * @author	Huayuan
  * @date	2015/7/27
  *
- * @param   msg 	ÏûÏ¢¶ÔÏóÖ¸Õë
+ * @param   msg 	æ¶ˆæ¯å¯¹è±¡æŒ‡é’ˆ
  */
 void im_msg_destroy(im_msg_t *msg);
 
