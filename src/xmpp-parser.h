@@ -1,5 +1,5 @@
 /* parser.h
- * ½âÎöÆ÷
+ * è§£æå™¨
 */
 
 #ifndef __IMCORE_XMPP_PARSER_H__

@@ -1,5 +1,5 @@
 /* ctx.c
- * ÉÏÏÂÎÄÊµÏÖ
+ * ä¸Šä¸‹æ–‡å®ç°
  */
 #include "xmpp-inl.h"
 
@@ -11,7 +11,7 @@ void xmpp_shutdown(void)
 {
 }
 
-// ÈÕÖ¾µÈ¼¶
+// æ—¥å¿—ç­‰çº§
 static const char * const _xmpp_log_level_name[4] = {"DEBUG", "INFO", "WARN", "ERROR"};
 static const xmpp_log_level_t _xmpp_default_logger_levels[] = {XMPP_LEVEL_DEBUG,
                                                                XMPP_LEVEL_INFO,
@@ -37,7 +37,7 @@ xmpp_log_t *xmpp_get_default_logger(xmpp_log_level_t level)
 {
     if (level > XMPP_LEVEL_ERROR) level = XMPP_LEVEL_ERROR;
     if (level < XMPP_LEVEL_DEBUG) level = XMPP_LEVEL_DEBUG;
-
+    
     return (xmpp_log_t*)&_xmpp_default_loggers[level];
 }
 static xmpp_log_t xmpp_default_log = { NULL, NULL };
@@ -49,7 +49,7 @@ void xmpp_log(const xmpp_ctx_t *ctx, xmpp_log_level_t level, const char *area, c
     char smbuf[1024];
     char *buf;
     va_list copy;
-
+    
     va_copy(copy, ap);
     ret = im_vsnprintf(smbuf, sizeof(smbuf), fmt, ap);
     if (ret >= (int)sizeof(smbuf)) {
@@ -72,10 +72,10 @@ void xmpp_log(const xmpp_ctx_t *ctx, xmpp_log_level_t level, const char *area, c
         buf = smbuf;
     }
     va_end(copy);
-
+    
     if (ctx->log->handler)
         ctx->log->handler(ctx->log->userdata, level, area, buf);
-
+        
     if (buf != smbuf)
         xmpp_free(ctx, buf);
 }
@@ -84,7 +84,7 @@ void xmpp_log(const xmpp_ctx_t *ctx, xmpp_log_level_t level, const char *area, c
 void xmpp_error(const xmpp_ctx_t *ctx, const char *area, const char *fmt, ...)
 {
     va_list ap;
-
+    
     va_start(ap, fmt);
     xmpp_log(ctx, XMPP_LEVEL_ERROR, area, fmt, ap);
     va_end(ap);
@@ -93,7 +93,7 @@ void xmpp_error(const xmpp_ctx_t *ctx, const char *area, const char *fmt, ...)
 void xmpp_warn(const xmpp_ctx_t *ctx, const char *area, const char *fmt, ...)
 {
     va_list ap;
-
+    
     va_start(ap, fmt);
     xmpp_log(ctx, XMPP_LEVEL_WARN, area, fmt, ap);
     va_end(ap);
@@ -102,7 +102,7 @@ void xmpp_warn(const xmpp_ctx_t *ctx, const char *area, const char *fmt, ...)
 void xmpp_info(const xmpp_ctx_t *ctx, const char *area, const char *fmt, ...)
 {
     va_list ap;
-
+    
     va_start(ap, fmt);
     xmpp_log(ctx, XMPP_LEVEL_INFO, area, fmt, ap);
     va_end(ap);
@@ -111,7 +111,7 @@ void xmpp_info(const xmpp_ctx_t *ctx, const char *area, const char *fmt, ...)
 void xmpp_debug(const xmpp_ctx_t *ctx, const char *area, const char *fmt, ...)
 {
     va_list ap;
-
+    
     va_start(ap, fmt);
     xmpp_log(ctx, XMPP_LEVEL_DEBUG, area, fmt, ap);
     va_end(ap);
@@ -122,20 +122,20 @@ xmpp_ctx_t *xmpp_ctx_new(im_thread_t *work_thread, const xmpp_log_t *log)
 {
     xmpp_ctx_t *ctx = NULL;
     ctx = safe_mem_malloc(sizeof(xmpp_ctx_t), NULL);
-
+    
     if (ctx != NULL) {
         if (log == NULL)
             ctx->log = &xmpp_default_log;
         else
             ctx->log = log;
-
+            
         ctx->base = im_thread_get_eventbase(work_thread);
-
-        // ³õÊ¼»¯SSLÉÏÏÂÎÄ
+        
+        // åˆå§‹åŒ–SSLä¸Šä¸‹æ–‡
         ctx->ssl_ctx = SSL_CTX_new(TLS_client_method());
         ctx->loop_status = XMPP_LOOP_NOTSTARTED;
     }
-
+    
     return ctx;
 }
 
@@ -146,15 +146,15 @@ void xmpp_ctx_free(xmpp_ctx_t *ctx)
 }
 
 /**
- * @fn	void xmpp_hash_free(void* p)
+ * @fn  void xmpp_hash_free(void* p)
  *
- * @brief	XMPP¿âÀïÃæÍ¨ÓÃµÄhashÖµÊÍ·Å´¦ÀíÆ÷.
- * 			È«²¿¶¼ÊÇchar*Ö¸Õë,Ö±½Ófree¼´¿É.
+ * @brief   XMPPåº“é‡Œé¢é€šç”¨çš„hashå€¼é‡Šæ”¾å¤„ç†å™¨.
+ *          å…¨éƒ¨éƒ½æ˜¯char*æŒ‡é’ˆ,ç›´æ¥freeå³å¯.
  *
- * @author	Huayuan
- * @date	2015/7/27
+ * @author  Huayuan
+ * @date    2015/7/27
  *
- * @param [in]	p	hash±íÊÍ·ÅÊ±»òÕßÖµ±»¸²¸ÇÊ±ĞèÒªÊÍ·ÅµÄvalue
+ * @param [in]  p   hashè¡¨é‡Šæ”¾æ—¶æˆ–è€…å€¼è¢«è¦†ç›–æ—¶éœ€è¦é‡Šæ”¾çš„value
  */
 void xmpp_hash_free(void* p)
 {

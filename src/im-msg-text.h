@@ -1,7 +1,7 @@
 /**
- * @file	src\im-msg-text.h
+ * @file    src\im-msg-text.h
  *
- * @brief	ÊµÏÖÎÄ±¾ÏûÏ¢·¢ËÍ
+ * @brief   å®ç°æ–‡æœ¬æ¶ˆæ¯å‘é€
  */
 #ifndef __IMCORE_MSG_TEXT_H__
 #define __IMCORE_MSG_TEXT_H__

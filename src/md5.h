@@ -1,5 +1,5 @@
 /* md5.h
- * md5ÊµÏÖ
+ * md5å®žçŽ°
  */
 
 #ifndef _IMCORE_XMPP_MD5_H
@@ -8,9 +8,9 @@
 #include <stdint.h>
 
 struct MD5Context {
-  uint32_t buf[4];
-  uint32_t bits[2];
-  unsigned char in[64];
+    uint32_t buf[4];
+    uint32_t bits[2];
+    unsigned char in[64];
 };
 
 void MD5Init(struct MD5Context *context);

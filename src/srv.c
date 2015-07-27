@@ -70,13 +70,13 @@ void netbuf_add_32bitnum(unsigned char *buf, int buflen, int *offset,
 {
     unsigned char *start = buf + *offset;
     unsigned char *p = start;
-
+    
     /* assuming big endian */
     *p++ = (num >> 24) & 0xff;
     *p++ = (num >> 16) & 0xff;
     *p++ = (num >> 8) & 0xff;
     *p++ = (num)& 0xff;
-
+    
     *offset += 4;
 }
 
@@ -86,13 +86,13 @@ void netbuf_get_32bitnum(unsigned char *buf, int buflen, int *offset,
     unsigned char *start = buf + *offset;
     unsigned char *p = start;
     *num = 0;
-
+    
     /* assuming big endian */
     *num |= (*p++) << 24;
     *num |= (*p++) << 16;
     *num |= (*p++) << 8;
     *num |= (*p++);
-
+    
     *offset += 4;
 }
 
@@ -101,11 +101,11 @@ void netbuf_add_16bitnum(unsigned char *buf, int buflen, int *offset,
 {
     unsigned char *start = buf + *offset;
     unsigned char *p = start;
-
+    
     /* assuming big endian */
     *p++ = (num >> 8) & 0xff;
     *p++ = (num)& 0xff;
-
+    
     *offset += 2;
 }
 
@@ -115,11 +115,11 @@ void netbuf_get_16bitnum(unsigned char *buf, int buflen, int *offset,
     unsigned char *start = buf + *offset;
     unsigned char *p = start;
     *num = 0;
-
+    
     /* assuming big endian */
     *num |= (*p++) << 8;
     *num |= (*p++);
-
+    
     *offset += 2;
 }
 
@@ -129,35 +129,35 @@ void netbuf_add_domain_name(unsigned char *buf, int buflen, int *offset,
     unsigned char *start = buf + *offset;
     unsigned char *p = start;
     unsigned char *wordstart, *wordend;
-
+    
     wordstart = (unsigned char *)name;
-
+    
     while (*wordstart) {
         int len;
         wordend = wordstart;
         while (*wordend && *wordend != '.') {
             wordend++;
         }
-
+        
         len = (int)(wordend - wordstart);
-
+        
         if (len > 0x3F) {
             len = 0x3F;
         }
-
+        
         *p++ = len;
-
+        
         while (wordstart != wordend) {
             *p++ = *wordstart++;
         }
-
+        
         if (*wordstart == '.') {
             wordstart++;
         }
     }
-
+    
     *p++ = '\0';
-
+    
     *offset += p - start;
 }
 
@@ -165,13 +165,13 @@ int calc_domain_name_size(unsigned char *buf, int buflen, int offset)
 {
     unsigned char *p = buf + offset;
     int len = 0;
-
+    
     while (*p) {
         if ((*p & 0xC0) == 0xC0) {
             int newoffset = 0;
             newoffset |= (*p++ & 0x3F) << 8;
             newoffset |= *p;
-
+            
             p = buf + newoffset;
         } else {
             if (len) {
@@ -181,7 +181,7 @@ int calc_domain_name_size(unsigned char *buf, int buflen, int offset)
             p += *p + 1;
         }
     }
-
+    
     return len;
 }
 
@@ -193,9 +193,9 @@ int netbuf_get_domain_name(unsigned char *buf, int buflen, int *offset,
     unsigned char *p, *p2;
     int *curroffset = offset;
     int len = 0;
-
+    
     *namebuf = '\0';
-
+    
     /* measure length */
     p = start;
     while (*p) {
@@ -203,18 +203,18 @@ int netbuf_get_domain_name(unsigned char *buf, int buflen, int *offset,
             int newoffset = 0;
             newoffset |= (*p++ & 0x3F) << 8;
             newoffset |= *p++;
-
+            
             p = buf + newoffset;
         } else {
             len += *p;
             p += *p + 1;
         }
     }
-
+    
     if (namebuflen < len) {
         return len;
     }
-
+    
     /* actually copy in name */
     p = start;
     p2 = (unsigned char *)namebuf;
@@ -223,36 +223,36 @@ int netbuf_get_domain_name(unsigned char *buf, int buflen, int *offset,
             int newoffset = 0;
             newoffset |= (*p++ & 0x3F) << 8;
             newoffset |= *p++;
-
+            
             if (curroffset) {
                 *curroffset += (int)(p - start);
                 curroffset = NULL;
             }
-
+            
             p = buf + newoffset;
         } else {
             int i, partlen;
-
+            
             if (*namebuf != '\0') {
                 *p2++ = '.';
             }
-
+            
             partlen = *p++;
-
+            
             for (i = 0; i < partlen; i++) {
                 *p2++ = *p++;
             }
         }
     }
-
+    
     if (curroffset) {
         p++;
         *curroffset += (int)(p - start);
         curroffset = NULL;
     }
-
+    
     *p2 = '\0';
-
+    
     return 0;
 }
 
@@ -260,9 +260,9 @@ void netbuf_add_dnsquery_header(unsigned char *buf, int buflen, int *offset,
                                 struct dnsquery_header *header)
 {
     unsigned char *p;
-
+    
     netbuf_add_16bitnum(buf, buflen, offset, header->id);
-
+    
     p = buf + *offset;
     *p++ = ((header->qr & 0x01) << 7)
            | ((header->opcode & 0x0F) << 3)
@@ -273,7 +273,7 @@ void netbuf_add_dnsquery_header(unsigned char *buf, int buflen, int *offset,
            | ((header->z & 0x07) << 4)
            | ((header->rcode & 0x0F));
     *offset += 2;
-
+    
     netbuf_add_16bitnum(buf, buflen, offset, header->qdcount);
     netbuf_add_16bitnum(buf, buflen, offset, header->ancount);
     netbuf_add_16bitnum(buf, buflen, offset, header->nscount);
@@ -284,9 +284,9 @@ void netbuf_get_dnsquery_header(unsigned char *buf, int buflen, int *offset,
                                 struct dnsquery_header *header)
 {
     unsigned char *p;
-
+    
     netbuf_get_16bitnum(buf, buflen, offset, &(header->id));
-
+    
     p = buf + *offset;
     header->qr = (*p >> 7) & 0x01;
     header->opcode = (*p >> 3) & 0x0F;
@@ -299,7 +299,7 @@ void netbuf_get_dnsquery_header(unsigned char *buf, int buflen, int *offset,
     header->rcode = (*p) & 0x0F;
     p++;
     *offset += 2;
-
+    
     netbuf_get_16bitnum(buf, buflen, offset, &(header->qdcount));
     netbuf_get_16bitnum(buf, buflen, offset, &(header->ancount));
     netbuf_get_16bitnum(buf, buflen, offset, &(header->nscount));
@@ -352,53 +352,53 @@ int im_srv_lookup(const char *service, const char *proto, const char *domain,
 {
     int set = 0;
     char fulldomain[2048];
-
+    
     snprintf(fulldomain, 2048, "_%s._%s.%s", service, proto, domain);
 #ifdef _WIN32
-
+    
     /* try using dnsapi first */
     if (!set) {
         HINSTANCE hdnsapi = NULL;
-
+        
         DNS_STATUS(WINAPI * pDnsQuery_A)(PCSTR, WORD, DWORD, PIP4_ARRAY, PDNS_RECORD*,
                                          PVOID*);
         void (WINAPI * pDnsRecordListFree)(PDNS_RECORD, DNS_FREE_TYPE);
-
+        
         if (hdnsapi = LoadLibrary("dnsapi.dll")) {
-
+        
             pDnsQuery_A = (void *)GetProcAddress(hdnsapi, "DnsQuery_A");
             pDnsRecordListFree = (void *)GetProcAddress(hdnsapi, "DnsRecordListFree");
-
+            
             if (pDnsQuery_A && pDnsRecordListFree) {
                 PDNS_RECORD dnsrecords = NULL;
                 DNS_STATUS error;
-
+                
                 error = pDnsQuery_A(fulldomain, DNS_TYPE_SRV, DNS_QUERY_STANDARD, NULL, &dnsrecords,
                                     NULL);
-
+                                    
                 if (error == 0) {
                     PDNS_RECORD current = dnsrecords;
-
+                    
                     while (current) {
                         if (current->wType == DNS_TYPE_SRV) {
                             snprintf(resulttarget, resulttargetlength, "%s", current->Data.Srv.pNameTarget);
                             *resultport = current->Data.Srv.wPort;
                             set = 1;
-
+                            
                             current = NULL;
                         } else {
                             current = current->pNext;
                         }
                     }
                 }
-
+                
                 pDnsRecordListFree(dnsrecords, DnsFreeRecordList);
             }
-
+            
             FreeLibrary(hdnsapi);
         }
     }
-
+    
     /* if dnsapi didn't work/isn't there, try querying the dns server manually */
     if (!set) {
         unsigned char buf[65536];
@@ -411,27 +411,27 @@ int im_srv_lookup(const char *service, const char *proto, const char *domain,
         char dnsserverips[16][256];
         int numdnsservers = 0;
         int j;
-
+        
         /* Try getting the DNS server ips from GetNetworkParams() in iphlpapi first */
         if (!numdnsservers) {
             HINSTANCE hiphlpapi = NULL;
             DWORD(WINAPI * pGetNetworkParams)(PFIXED_INFO, PULONG);
-
+            
             if (hiphlpapi = LoadLibrary("Iphlpapi.dll")) {
                 pGetNetworkParams = (void *)GetProcAddress(hiphlpapi, "GetNetworkParams");
-
+                
                 if (pGetNetworkParams) {
                     FIXED_INFO *fi;
                     ULONG len;
                     DWORD error;
                     char buffer[65535];
-
+                    
                     len = 65535;
                     fi = (FIXED_INFO *)buffer;
-
+                    
                     if ((error = pGetNetworkParams(fi, &len)) == ERROR_SUCCESS) {
                         IP_ADDR_STRING *pias = &(fi->DnsServerList);
-
+                        
                         while (pias && numdnsservers < 16) {
                             strcpy(dnsserverips[numdnsservers++], pias->IpAddress.String);
                             pias = pias->Next;
@@ -441,77 +441,77 @@ int im_srv_lookup(const char *service, const char *proto, const char *domain,
             }
             FreeLibrary(hiphlpapi);
         }
-
+        
         /* Next, try getting the DNS server ips from the registry */
         if (!numdnsservers) {
             HKEY search;
             LONG error;
-
+            
             error = RegOpenKeyEx(HKEY_LOCAL_MACHINE,
                                  "SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters", 0, KEY_READ, &search);
-
+                                 
             if (error != ERROR_SUCCESS) {
                 error = RegOpenKeyEx(HKEY_LOCAL_MACHINE,
                                      "SYSTEM\\CurrentControlSet\\Services\\VxD\\MSTCP", 0, KEY_READ, &search);
             }
-
+            
             if (error == ERROR_SUCCESS) {
                 char name[512];
                 DWORD len = 512;
-
+                
                 error = RegQueryValueEx(search, "NameServer", NULL, NULL, (LPBYTE)name, &len);
-
+                
                 if (error != ERROR_SUCCESS) {
                     error = RegQueryValueEx(search, "DhcpNameServer", NULL, NULL, (LPBYTE)name, &len);
                 }
-
+                
                 if (error == ERROR_SUCCESS) {
                     char *parse = "0123456789.", *start, *end;
                     start = name;
                     end = name;
                     name[len] = '\0';
-
+                    
                     while (*start && numdnsservers < 16) {
                         while (strchr(parse, *end)) {
                             end++;
                         }
-
+                        
                         strncpy(dnsserverips[numdnsservers++], start, end - start);
-
+                        
                         while (*end && !strchr(parse, *end)) {
                             end++;
                         }
-
+                        
                         start = end;
                     }
                 }
             }
-
+            
             RegCloseKey(search);
         }
-
+        
         if (!numdnsservers) {
             HKEY searchlist;
             LONG error;
-
+            
             error = RegOpenKeyEx(HKEY_LOCAL_MACHINE,
                                  "SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters\\Interfaces", 0, KEY_READ,
                                  &searchlist);
-
+                                 
             if (error == ERROR_SUCCESS) {
                 unsigned int i;
                 DWORD numinterfaces = 0;
-
+                
                 RegQueryInfoKey(searchlist, NULL, NULL, NULL, &numinterfaces, NULL, NULL, NULL, NULL,
                                 NULL, NULL, NULL);
-
+                                
                 for (i = 0; i < numinterfaces; i++) {
                     char name[512];
                     DWORD len = 512;
                     HKEY searchentry;
-
+                    
                     RegEnumKeyEx(searchlist, i, (LPTSTR)name, &len, NULL, NULL, NULL, NULL);
-
+                    
                     if (RegOpenKeyEx(searchlist, name, 0, KEY_READ, &searchentry) == ERROR_SUCCESS) {
                         if (RegQueryValueEx(searchentry, "DhcpNameServer", NULL, NULL, (LPBYTE)name,
                                             &len) == ERROR_SUCCESS) {
@@ -519,18 +519,18 @@ int im_srv_lookup(const char *service, const char *proto, const char *domain,
                             start = name;
                             end = name;
                             name[len] = '\0';
-
+                            
                             while (*start && numdnsservers < 16) {
                                 while (strchr(parse, *end)) {
                                     end++;
                                 }
-
+                                
                                 strncpy(dnsserverips[numdnsservers++], start, end - start);
-
+                                
                                 while (*end && !strchr(parse, *end)) {
                                     end++;
                                 }
-
+                                
                                 start = end;
                             }
                         } else if (RegQueryValueEx(searchentry, "NameServer", NULL, NULL, (LPBYTE)name,
@@ -539,18 +539,18 @@ int im_srv_lookup(const char *service, const char *proto, const char *domain,
                             start = name;
                             end = name;
                             name[len] = '\0';
-
+                            
                             while (*start && numdnsservers < 16) {
                                 while (strchr(parse, *end)) {
                                     end++;
                                 }
-
+                                
                                 strncpy(dnsserverips[numdnsservers++], start, end - start);
-
+                                
                                 while (*end && !strchr(parse, *end)) {
                                     end++;
                                 }
-
+                                
                                 start = end;
                             }
                         }
@@ -560,38 +560,38 @@ int im_srv_lookup(const char *service, const char *proto, const char *domain,
                 RegCloseKey(searchlist);
             }
         }
-
+        
         /* If we have a DNS server, use it */
         if (numdnsservers) {
             ULONG nonblocking = 1;
             int i;
             int insize;
-
+            
             memset(&header, 0, sizeof(header));
             header.id = 12345; /* FIXME: Get a better id here */
             header.rd = 1;
             header.qdcount = 1;
-
+            
             netbuf_add_dnsquery_header(buf, 65536, &offset, &header);
-
+            
             memset(&question, 0, sizeof(question));
             strncpy(question.qname, fulldomain, 1024);
             question.qtype = 33; /* SRV */
             question.qclass = 1; /* INTERNET! */
-
+            
             netbuf_add_dnsquery_question(buf, 65536, &offset, &question);
-
+            
             insize = 0;
             for (i = 0; i < numdnsservers && insize <= 0; i++) {
                 sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
                 ioctlsocket(sock, FIONBIO, &nonblocking);
-
+                
                 memset(&dnsaddr, 0, sizeof(dnsaddr));
-
+                
                 dnsaddr.sin_family = AF_INET;
                 dnsaddr.sin_port = htons(53);
                 dnsaddr.sin_addr.s_addr = inet_addr(dnsserverips[i]);
-
+                
                 addrlen = sizeof(dnsaddr);
                 sendto(sock, (char *)buf, offset, 0, (struct sockaddr *)&dnsaddr, addrlen);
                 for (j = 0; j < 50; j++) {
@@ -607,90 +607,90 @@ int im_srv_lookup(const char *service, const char *proto, const char *domain,
                         break;
                     }
                 }
-
+                
                 closesocket(sock);
             }
-
+            
             offset = insize;
-
+            
             if (offset > 0) {
                 int len = offset;
                 int i;
                 struct dnsquery_header header;
                 struct dnsquery_question question;
                 struct dnsquery_resourcerecord rr;
-
+                
                 offset = 0;
                 netbuf_get_dnsquery_header(buf, 65536, &offset, &header);
-
+                
                 for (i = 0; i < header.qdcount; i++) {
                     netbuf_get_dnsquery_question(buf, 65536, &offset, &question);
                 }
-
+                
                 for (i = 0; i < header.ancount; i++) {
                     netbuf_get_dnsquery_resourcerecord(buf, 65536, &offset, &rr);
-
+                    
                     if (rr.type == 33) {
                         struct dnsquery_srvrdata *srvrdata = &(rr.rdata);
-
+                        
                         snprintf(resulttarget, resulttargetlength, "%s", srvrdata->target);
                         *resultport = srvrdata->port;
                         set = 1;
                     }
                 }
-
+                
                 for (i = 0; i < header.ancount; i++) {
                     netbuf_get_dnsquery_resourcerecord(buf, 65536, &offset, &rr);
                 }
             }
         }
-
+        
     }
-
+    
 #else
     if (!set) {
         unsigned char buf[65535];
         int len;
-
+    
         if ((len = res_query(fulldomain, C_IN, T_SRV, buf, 65535)) > 0) {
             int offset;
             int i;
             struct dnsquery_header header;
             struct dnsquery_question question;
             struct dnsquery_resourcerecord rr;
-
+    
             offset = 0;
             netbuf_get_dnsquery_header(buf, 65536, &offset, &header);
-
+    
             for (i = 0; i < header.qdcount; i++) {
                 netbuf_get_dnsquery_question(buf, 65536, &offset, &question);
             }
-
+    
             for (i = 0; i < header.ancount; i++) {
                 netbuf_get_dnsquery_resourcerecord(buf, 65536, &offset, &rr);
-
+    
                 if (rr.type == 33) {
                     struct dnsquery_srvrdata *srvrdata = &(rr.rdata);
-
+    
                     snprintf(resulttarget, resulttargetlength, "%s",
                              srvrdata->target);
                     *resultport = srvrdata->port;
                     set = 1;
                 }
             }
-
+    
             for (i = 0; i < header.ancount; i++) {
                 netbuf_get_dnsquery_resourcerecord(buf, 65536, &offset, &rr);
             }
         }
     }
 #endif
-
+    
     if (!set) {
         snprintf(resulttarget, resulttargetlength, "%s", domain);
         *resultport = 5222;
         return 0;
     }
-
+    
     return 1;
 }

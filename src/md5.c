@@ -1,5 +1,5 @@
 /* md5.c
-*  md5й╣ож
+*  md5Е╝·Г▌╟
 */
 
 #include <string.h> /* memcpy(), memset() */

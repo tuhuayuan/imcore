@@ -1,5 +1,5 @@
 /* jid.c
- * JID °ïÖúº¯Êı
+ * JID å¸®åŠ©å‡½æ•°
  */
 #include "xmpp-inl.h"
 

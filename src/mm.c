@@ -9,8 +9,8 @@ typedef struct ring_mem {
     char *file;
     uint64_t line;
     void *userdata;
-
-    // Ë«Á´±í
+    
+    // åŒé“¾è¡¨
     struct list_head ring;
 } ring_mem_t;
 

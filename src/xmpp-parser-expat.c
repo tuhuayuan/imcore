@@ -1,5 +1,5 @@
 /* parser.c
- * ·â×°expat¿â
+ * å°è£…expatåº“
  */
 #include "xmpp-inl.h"
 #include <expat.h>
@@ -10,15 +10,15 @@ struct _parser_t {
 
     xmpp_conn_t *conn;
     XML_Parser expat;
-
+    
     parser_start_callback startcb;
     parser_end_callback endcb;
     parser_stanza_callback stanzacb;
-
+    
     void *userdata;
     int depth;
     xmpp_stanza_t *stanza;
-
+    
     int reset;
 };
 
@@ -35,11 +35,11 @@ static char *_xml_name(xmpp_ctx_t *ctx, const char *nsname)
     char *result = NULL;
     const char *c;
     int len;
-
+    
     c = strchr(nsname, NAMESPACE_SEP);
     if (c == NULL)
         return xmpp_strdup(ctx, nsname);
-
+        
     c++;
     len = strlen(c);
     result = xmpp_alloc(ctx, len + 1);
@@ -47,7 +47,7 @@ static char *_xml_name(xmpp_ctx_t *ctx, const char *nsname)
         memcpy(result, c, len);
         result[len] = '\0';
     }
-
+    
     return result;
 }
 
@@ -55,7 +55,7 @@ static char *_xml_namespace(xmpp_ctx_t *ctx, const char *nsname)
 {
     char *result = NULL;
     const char *c;
-
+    
     c = strchr(nsname, NAMESPACE_SEP);
     if (c != NULL) {
         result = xmpp_alloc(ctx, (c-nsname) + 1);
@@ -64,7 +64,7 @@ static char *_xml_namespace(xmpp_ctx_t *ctx, const char *nsname)
             result[c-nsname] = '\0';
         }
     }
-
+    
     return result;
 }
 
@@ -72,10 +72,10 @@ static void _set_attributes(xmpp_stanza_t *stanza, const XML_Char **attrs)
 {
     char *attr;
     int i;
-
+    
     if (!attrs)
         return;
-
+        
     for (i = 0; attrs[i]; i += 2) {
         attr = _xml_name(stanza->ctx, attrs[i]);
         xmpp_stanza_set_attribute(stanza, attr, attrs[i+1]);
@@ -83,25 +83,25 @@ static void _set_attributes(xmpp_stanza_t *stanza, const XML_Char **attrs)
     }
 }
 
-// expat»Øµ÷
+// expatå›è°ƒ
 static void _start_element(void *userdata, const XML_Char *nsname, const XML_Char **attrs)
 {
     parser_t *parser = (parser_t *)userdata;
     xmpp_stanza_t *child;
     char *ns, *name;
-
-    // °Ñnamespace·ÖÀë
+    
+    // æŠŠnamespaceåˆ†ç¦»
     ns = _xml_namespace(parser->conn->ctx, nsname);
     name = _xml_name(parser->conn->ctx, nsname);
-
+    
     if (parser->depth == 0) {
-        // xmlÁ÷µÚÒ»²ã
+        // xmlæµç¬¬ä¸€å±‚
         if (parser->startcb) {
             parser->startcb((char *)name, (char **)attrs, parser->userdata);
         }
-
+        
     } else {
-        // xmlÁ÷´óÓÚµÈÓÚµÚ¶ş²ã
+        // xmlæµå¤§äºç­‰äºç¬¬äºŒå±‚
         if (!parser->stanza && parser->depth == 1) {
             parser->stanza = xmpp_stanza_new(parser->conn->ctx);
             if (!parser->stanza) {
@@ -111,7 +111,7 @@ static void _start_element(void *userdata, const XML_Char *nsname, const XML_Cha
             _set_attributes(parser->stanza, attrs);
             if (ns)
                 xmpp_stanza_set_ns(parser->stanza, ns);
-
+                
         } else if (parser->depth > 1 && parser->stanza) {
             child = xmpp_stanza_new(parser->conn->ctx);
             if (!child) {
@@ -121,7 +121,7 @@ static void _start_element(void *userdata, const XML_Char *nsname, const XML_Cha
             _set_attributes(child, attrs);
             if (ns)
                 xmpp_stanza_set_ns(child, ns);
-
+                
             xmpp_stanza_add_child(parser->stanza, child);
             xmpp_stanza_release(child);
             parser->stanza = child;
@@ -129,60 +129,60 @@ static void _start_element(void *userdata, const XML_Char *nsname, const XML_Cha
             PARSER_ERROR_RETURN(parser->conn);
         }
     }
-
+    
     if (ns) xmpp_free(parser->conn->ctx, ns);
     if (name) xmpp_free(parser->conn->ctx, name);
-
+    
     parser->depth++;
 }
 
-// expat»Øµ÷
+// expatå›è°ƒ
 static void _end_element(void *userdata, const XML_Char *name)
 {
     parser_t *parser = (parser_t *)userdata;
     parser->depth--;
-
+    
     if (parser->depth == 0) {
-        // xmpÁ÷½áÊø
+        // xmpæµç»“æŸ
         if (parser->endcb)
             parser->endcb((char *)name, parser->userdata);
-
+            
     } else {
         if (parser->stanza->parent) {
-            // ×Óstanza½áÊø£¬»ØÍËµ½Ëû¸¸ÔªËØ
+            // å­stanzaç»“æŸï¼Œå›é€€åˆ°ä»–çˆ¶å…ƒç´ 
             parser->stanza = parser->stanza->parent;
         } else {
             if (parser->stanzacb)
                 parser->stanzacb(parser->stanza, parser->userdata);
-
+                
             xmpp_stanza_release(parser->stanza);
             parser->stanza = NULL;
         }
     }
 }
 
-// expat»Øµ÷
+// expatå›è°ƒ
 static void _characters(void *userdata, const XML_Char *s, int len)
 {
     parser_t *parser = (parser_t*)userdata;
     xmpp_stanza_t *stanza;
-
-    // ²»Ó¦¸ÃÔÚ¶¥²ã³öÏÖtext
+    
+    // ä¸åº”è¯¥åœ¨é¡¶å±‚å‡ºç°text
     if (parser->depth < 2) {
         PARSER_ERROR_RETURN(parser->conn);
     }
-
+    
     stanza = xmpp_stanza_new(parser->conn->ctx);
     if (!stanza) {
         PARSER_ERROR_RETURN(parser->conn);
     }
     xmpp_stanza_set_text_safe(stanza, s, len);
-
+    
     xmpp_stanza_add_child(parser->stanza, stanza);
     xmpp_stanza_release(stanza);
 }
 
-// ĞÂ½¨Ò»¸ö½âÎöÆ÷
+// æ–°å»ºä¸€ä¸ªè§£æå™¨
 parser_t *parser_new(xmpp_conn_t *conn,
                      parser_start_callback startcb,
                      parser_end_callback endcb,
@@ -190,7 +190,7 @@ parser_t *parser_new(xmpp_conn_t *conn,
                      void *userdata)
 {
     parser_t *parser;
-
+    
     parser = xmpp_alloc(conn->ctx, sizeof(parser_t));
     if (parser != NULL) {
         parser->conn = conn;
@@ -204,51 +204,51 @@ parser_t *parser_new(xmpp_conn_t *conn,
         parser->reset = 0;
         parser_reset(parser);
     }
-
+    
     return parser;
 }
 
-// ÊÍ·Å½âÎöÆ÷
+// é‡Šæ”¾è§£æå™¨
 void parser_free(parser_t *parser)
 {
     if (parser->expat)
         XML_ParserFree(parser->expat);
-
+        
     xmpp_free(parser->conn->ctx, parser);
 }
 
-// ÖØÖÃ½âÎöÆ÷×´Ì¬
+// é‡ç½®è§£æå™¨çŠ¶æ€
 static void _defer_parser_reset(parser_t *parser)
 {
     if (parser->expat)
         XML_ParserFree(parser->expat);
-
+        
     if (parser->stanza)
         xmpp_stanza_release(parser->stanza);
-
+        
     parser->expat = XML_ParserCreateNS(NULL, NAMESPACE_SEP);
     if (!parser->expat) {
         PARSER_ERROR_RETURN(parser->conn);
     }
-
+    
     parser->depth = 0;
     parser->stanza = NULL;
-
+    
     XML_SetUserData(parser->expat, parser);
     XML_SetElementHandler(parser->expat, _start_element, _end_element);
     XML_SetCharacterDataHandler(parser->expat, _characters);
-
+    
     parser->reset = 0;
 }
 
-// ÑÓ³Ùµ÷ÓÃ
+// å»¶è¿Ÿè°ƒç”¨
 int parser_reset(parser_t *parser)
 {
     parser->reset = 1;
     return 1;
 }
 
-// ½âÎöxmlÁ÷×Ö·û´®
+// è§£æxmlæµå­—ç¬¦ä¸²
 int parser_feed(parser_t *parser, char *chunk, int len)
 {
     if (parser->reset) {

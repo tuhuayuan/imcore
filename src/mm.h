@@ -1,6 +1,6 @@
 /*
 * mm.h
-* �ڴ����ģ�飬�ṩ��̬�ڴ��������Լ��ڴ�������(DEBUG)
+* 内存管理模块，提供动态内存分配管理以及内存溢出检查(DEBUG)
 */
 #ifndef _IMCORE_MM_H
 #define _IMCORE_MM_H

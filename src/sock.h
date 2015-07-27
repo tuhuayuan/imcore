@@ -1,5 +1,5 @@
 /* sock.h
- * socket移植定义以及初始化部分，读写部分交给libevent
+ * socket绉绘瀹氫箟浠ュ強鍒濆鍖栭儴鍒嗭紝璇诲啓閮ㄥ垎浜ょ粰libevent
  */
 #ifndef __IMCORE_XMPP_SOCK_H__
 #define __IMCORE_XMPP_SOCK_H__

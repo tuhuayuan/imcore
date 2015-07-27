@@ -33,7 +33,7 @@ int im_vsnprintf(char *outBuf, size_t size, const char *format, va_list ap)
         count = _vsnprintf_s(outBuf, size, _TRUNCATE, format, ap);
     if (count == -1)
         count = _vscprintf(format, ap);
-#else     // C99±ê×¼º¯Êý
+#else     // C99æ ‡å‡†å‡½æ•°
     count = vsnprintf(outBuf, size, format, ap);
 #endif
     return count;

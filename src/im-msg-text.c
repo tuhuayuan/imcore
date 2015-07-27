@@ -1,6 +1,6 @@
 /**
- * @file	src\im-msg-text.c
+ * @file    src\im-msg-text.c
  *
- * @brief	ÊµÏÖÎÄ±¾ÏûÏ¢·¢ËÍ
+ * @brief   å®ç°æ–‡æœ¬æ¶ˆæ¯å‘é€
  */
 #include "im-msg-text.h"

@@ -1,21 +1,21 @@
 /* conn.c
- * Á¬½Ó¹ÜÀí
+ * è¿æ¥ç®¡ç†
  */
 #include "xmpp-inl.h"
 #include "srv.h"
 
-#define RESPOND_TIMEOUT 5                    //Ä¬ÈÏ5Ãë³¬Ê±
+#define RESPOND_TIMEOUT 5                    //é»˜è®¤5ç§’è¶…æ—¶
 
 
-// Á÷½áÊøÇëÇóTimer callback
+// æµç»“æŸè¯·æ±‚Timer callback
 static int _disconnect_cleanup(xmpp_conn_t *conn, void *userdata);
 
-// Parser »Øµ÷
+// Parser å›è°ƒ
 static void _handle_stream_start(char *name, char **attrs, void *userdata);
 static void _handle_stream_end(char *name, void *userdata);
 static void _handle_stream_stanza(xmpp_stanza_t *stanza, void *userdata);
 
-// ¶ÁÈ¡Êı¾İ»Øµ÷
+// è¯»å–æ•°æ®å›è°ƒ
 static void _evb_read_cb(struct bufferevent *bev, void *ptr)
 {
     char buff[4096];
@@ -24,28 +24,28 @@ static void _evb_read_cb(struct bufferevent *bev, void *ptr)
     size_t len = 0;
     
     if ((len = bufferevent_read(conn->evbuffer, buff, sizeof(buff))) > 0) {
-        // ¸ø½âÎöÆ÷Ìî³äÊı¾İ
+        // ç»™è§£æå™¨å¡«å……æ•°æ®
         ret = parser_feed(conn->parser, buff, len);
         if (!ret) {
-            // xmlÁ÷½âÎö´íÎó
+            // xmlæµè§£æé”™è¯¯
             xmpp_debug(conn->ctx, "xmpp", "XML parse error.");
             conn_do_disconnect(conn);
         }
     }
 }
 
-// ÊÂ¼ş»Øµ÷
+// äº‹ä»¶å›è°ƒ
 static void _evb_event_cb(struct bufferevent *bev, short what, void *ptr)
 {
     xmpp_conn_t *conn = ptr;
     if (what & (BEV_EVENT_EOF | BEV_EVENT_ERROR)) {
-        // ´íÎóÒÔ¼°¶Ï¿ªÁ¬½Ó
+        // é”™è¯¯ä»¥åŠæ–­å¼€è¿æ¥
         conn->error = ECONNRESET;
         xmpp_info(conn->ctx, "xmpp", "Connection closed by remote host.");
         conn_do_disconnect(conn);
         
     } else if (what & BEV_EVENT_TIMEOUT) {
-        // ³¬Ê±´¦Àí
+        // è¶…æ—¶å¤„ç†
         conn->error = ETIMEDOUT;
         xmpp_info(conn->ctx, "xmpp", "Connection timed out.");
         conn_do_disconnect(conn);
@@ -58,11 +58,11 @@ static void _evb_event_cb(struct bufferevent *bev, short what, void *ptr)
                 conn->secured = 1;
             }
             
-            // ÉèÖÃbuff»Øµ÷
+            // è®¾ç½®buffå›è°ƒ
             bufferevent_enable(bev, EV_READ | EV_WRITE);
             bufferevent_setcb(conn->evbuffer, _evb_read_cb, NULL, _evb_event_cb, conn);
             
-            // ³õÊ¼»¯Á÷
+            // åˆå§‹åŒ–æµ
             conn_reset_stream(conn, auth_handle_open);
             conn_init_stream(conn);
         }
@@ -76,7 +76,7 @@ xmpp_conn_t *xmpp_conn_new(xmpp_ctx_t *ctx)
     if (ctx == NULL)
         return NULL;
         
-    // ·ÖÅä½á¹¹ÄÚ´æ
+    // åˆ†é…ç»“æ„å†…å­˜
     conn = xmpp_alloc(ctx, sizeof(xmpp_conn_t));
     if (conn != NULL) {
         conn->ctx = ctx;
@@ -88,7 +88,7 @@ xmpp_conn_t *xmpp_conn_new(xmpp_ctx_t *ctx)
         conn->userdata = NULL;
         conn->evbuffer = NULL;
         
-        // Á¬½ÓĞÅÏ¢
+        // è¿æ¥ä¿¡æ¯
         conn->lang = xmpp_strdup(conn->ctx, "zh-cn");
         if (!conn->lang) {
             xmpp_free(conn->ctx, conn);
@@ -107,28 +107,28 @@ xmpp_conn_t *xmpp_conn_new(xmpp_ctx_t *ctx)
         conn->bind_required = 0;
         conn->session_required = 0;
         
-        // ½âÎöÆ÷
+        // è§£æå™¨
         conn->parser = parser_new(conn,
                                   _handle_stream_start,
                                   _handle_stream_end,
                                   _handle_stream_stanza,
                                   conn);
                                   
-        // ÉèÖÃxmppÈÏÖ¤Èë¿Ú
+        // è®¾ç½®xmppè®¤è¯å…¥å£
         conn_reset_stream(conn, auth_handle_open);
         conn->authenticated = 0;
         
-        // Á¬½Óhandler
+        // è¿æ¥handler
         conn->conn_handler = NULL;
         
-        //hash±íÄÚ²¿Ò²ÊÇxmpp_handlist_t, ²»Ìá¹©ÊÍ·Å·½·¨
+        //hashè¡¨å†…éƒ¨ä¹Ÿæ˜¯xmpp_handlist_t, ä¸æä¾›é‡Šæ”¾æ–¹æ³•
         conn->id_handlers = hash_new(32, NULL);
         
-        // handlerÁ´±íÍ·
+        // handleré“¾è¡¨å¤´
         INIT_LIST_HEAD(&conn->timed_handlers.dlist);
         INIT_LIST_HEAD(&conn->handlers.dlist);
         
-        // ÒıÓÃ¼ÆÊı
+        // å¼•ç”¨è®¡æ•°
         conn->ref = 1;
         
     }
@@ -147,14 +147,14 @@ int xmpp_conn_release(xmpp_conn_t *conn)
     int released = 0;
     
     if (conn->ref > 1) {
-        // ÒıÓÃ¼ÆÊıÃ»µ½0
+        // å¼•ç”¨è®¡æ•°æ²¡åˆ°0
         conn->ref--;
     } else {
         ctx = conn->ctx;
         
         handler_clear_all(conn);
         
-        // ÊÍ·Å´íÎóstanza
+        // é‡Šæ”¾é”™è¯¯stanza
         if (conn->stream_error) {
             xmpp_stanza_release(conn->stream_error->stanza);
             if (conn->stream_error->text)
@@ -162,10 +162,10 @@ int xmpp_conn_release(xmpp_conn_t *conn)
             xmpp_free(ctx, conn->stream_error);
         }
         
-        // ÊÍ·Å½âÎöÆ÷
+        // é‡Šæ”¾è§£æå™¨
         parser_free(conn->parser);
         
-        // ÊÍ·Å¸´ÖÆ×Ö·û´®
+        // é‡Šæ”¾å¤åˆ¶å­—ç¬¦ä¸²
         if (conn->domain) xmpp_free(ctx, conn->domain);
         if (conn->jid) xmpp_free(ctx, conn->jid);
         if (conn->bound_jid) xmpp_free(ctx, conn->bound_jid);
@@ -173,7 +173,7 @@ int xmpp_conn_release(xmpp_conn_t *conn)
         if (conn->stream_id) xmpp_free(ctx, conn->stream_id);
         if (conn->lang) xmpp_free(ctx, conn->lang);
         
-        // ¸É¾»ÁË
+        // å¹²å‡€äº†
         xmpp_free(ctx, conn);
         released = 1;
     }
@@ -188,12 +188,12 @@ int xmpp_connect_client(xmpp_conn_t *conn, const char *altdomain, unsigned short
     const char *domain;
     conn->type = XMPP_CLIENT;
     
-    // »ñÈ¡jidÀïÃæµÄÓòÃû, jidµÄÓòÃû»¹ĞèÒª²éÑ¯SRV¼ÇÂ¼»ñµÃÊµ¼ÊµÄ·şÎñÆ÷ÓòÃû
+    // è·å–jidé‡Œé¢çš„åŸŸå, jidçš„åŸŸåè¿˜éœ€è¦æŸ¥è¯¢SRVè®°å½•è·å¾—å®é™…çš„æœåŠ¡å™¨åŸŸå
     conn->domain = xmpp_jid_domain(conn->ctx, conn->jid);
     if (!conn->domain)
         return -1;
         
-    // Ö±½ÓÖ¸¶¨ÁË·şÎñÆ÷ÓòÃû£¬»¹ÊÇ¶ÔjidµÄÓòÃû½øĞĞSRV½âÎö
+    // ç›´æ¥æŒ‡å®šäº†æœåŠ¡å™¨åŸŸåï¼Œè¿˜æ˜¯å¯¹jidçš„åŸŸåè¿›è¡ŒSRVè§£æ
     if (altdomain) {
         xmpp_debug(conn->ctx, "xmpp", "Connecting via altdomain.");
         strcpy(connectdomain, altdomain);
@@ -211,32 +211,32 @@ int xmpp_connect_client(xmpp_conn_t *conn, const char *altdomain, unsigned short
         connectport = altport ? altport : 5222;
     }
     
-    // ¿ªÊ¼ÓòÃû½âÊÍ
-    // ¶Ë¿Ú×Ö·û´®»º³å
+    // å¼€å§‹åŸŸåè§£é‡Š
+    // ç«¯å£å­—ç¬¦ä¸²ç¼“å†²
     int err;
     char port_buf[6];
     struct evutil_addrinfo hints;
     struct evutil_addrinfo *answer = NULL;
     
-    // °Ñ¶Ë¿Ú×ª»»³ÉÊ®½øÖÆ¸ñÊ½µÄ×Ö·û´®
+    // æŠŠç«¯å£è½¬æ¢æˆåè¿›åˆ¶æ ¼å¼çš„å­—ç¬¦ä¸²
     evutil_snprintf(port_buf, sizeof(port_buf), "%d", (int)connectport);
     memset(&hints, 0, sizeof(hints));
     
-    // ÉèÖÃĞ­Òé²ÎÊı
-    hints.ai_family = AF_INET; // Ğ­Òé×å
-    hints.ai_socktype = SOCK_STREAM; // Á÷socket
-    hints.ai_protocol = IPPROTO_TCP; // TCPĞ­Òé
-    hints.ai_flags = EVUTIL_AI_ADDRCONFIG; // Ö»½ÓÊÜipv4µÄµØÖ·
+    // è®¾ç½®åè®®å‚æ•°
+    hints.ai_family = AF_INET; // åè®®æ—
+    hints.ai_socktype = SOCK_STREAM; // æµsocket
+    hints.ai_protocol = IPPROTO_TCP; // TCPåè®®
+    hints.ai_flags = EVUTIL_AI_ADDRCONFIG; // åªæ¥å—ipv4çš„åœ°å€
     
-    // ½âÎöµØÖ·
+    // è§£æåœ°å€
     err = evutil_getaddrinfo(connectdomain, port_buf, &hints, &answer);
     if (err != 0) {
         xmpp_error(conn->ctx, "xmpp", "getaddrinfo returned %d", gai_strerror(err));
         return -1;
     }
     
-    // ¿ªÊ¼Á¬½Ó
-    // ·ÖÅäbufferevent
+    // å¼€å§‹è¿æ¥
+    // åˆ†é…bufferevent
     conn->evbuffer = bufferevent_socket_new(conn->ctx->base, -1,
                                             BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE | BEV_OPT_DEFER_CALLBACKS);
     if (!conn->evbuffer) {
@@ -244,7 +244,7 @@ int xmpp_connect_client(xmpp_conn_t *conn, const char *altdomain, unsigned short
         return -1;
     }
     
-    // ÉèÖÃ»Øµ÷
+    // è®¾ç½®å›è°ƒ
     bufferevent_setcb(conn->evbuffer, NULL, NULL, _evb_event_cb, conn);
     
     /* char ipstr[16];
@@ -253,7 +253,7 @@ int xmpp_connect_client(xmpp_conn_t *conn, const char *altdomain, unsigned short
          printf("#### %s\n", ipstr);
      }*/
     
-    // ·¢ÆğÒì²½Á¬½Ó
+    // å‘èµ·å¼‚æ­¥è¿æ¥
     if (bufferevent_socket_connect(conn->evbuffer, (struct sockaddr*)answer->ai_addr,
                                    answer->ai_addrlen) < 0) {
         xmpp_error(conn->ctx, "xmpp", "bufferevent_socket_connect error");
@@ -261,8 +261,8 @@ int xmpp_connect_client(xmpp_conn_t *conn, const char *altdomain, unsigned short
         return -1;
     }
     
-    // ÉèÖÃÁ¬½Ó»Øµ÷
-    conn->conn_handler = callback;              // Íâ²¿½Ó¿Ú
+    // è®¾ç½®è¿æ¥å›è°ƒ
+    conn->conn_handler = callback;              // å¤–éƒ¨æ¥å£
     conn->userdata = userdata;
     
     conn->state = XMPP_STATE_CONNECTING;
@@ -272,14 +272,14 @@ int xmpp_connect_client(xmpp_conn_t *conn, const char *altdomain, unsigned short
     return 0;
 }
 
-// Æô¶¯sslÁ¬½Ó
+// å¯åŠ¨sslè¿æ¥
 void conn_start_ssl(xmpp_conn_t *conn)
 {
     struct event_base *base = conn->ctx->base;
     struct bufferevent* ssl_bev = NULL;
     SSL *ssl = NULL;
     
-    // ±ØĞëÊÇÒÑ½¨Á¢ÁËTCPÁ¬½Ó²ÅÄÜÆô¶¯ÎÕÊÖ
+    // å¿…é¡»æ˜¯å·²å»ºç«‹äº†TCPè¿æ¥æ‰èƒ½å¯åŠ¨æ¡æ‰‹
     if (conn->state != XMPP_STATE_CONNECTED
         || (ssl = bufferevent_openssl_get_ssl(conn->evbuffer)))
         return;
@@ -290,7 +290,7 @@ void conn_start_ssl(xmpp_conn_t *conn)
               BEV_OPT_CLOSE_ON_FREE | BEV_OPT_DEFER_CALLBACKS);
               
     if (!ssl_bev) {
-        // ´´½¨opensll¹ıÂËÆ÷Ê§°Ü
+        // åˆ›å»ºopensllè¿‡æ»¤å™¨å¤±è´¥
         xmpp_error(conn->ctx, "conn", "Open tls bufferevent failed.");
         conn_do_disconnect(conn);
         
@@ -302,7 +302,7 @@ void conn_start_ssl(xmpp_conn_t *conn)
     
 }
 
-// ÆôÓÃÑ¹Ëõ´«Êä
+// å¯ç”¨å‹ç¼©ä¼ è¾“
 int conn_start_compression(xmpp_conn_t *conn)
 {
     return -1;
@@ -312,16 +312,16 @@ void conn_do_disconnect(xmpp_conn_t *conn)
 {
     xmpp_debug(conn->ctx, "xmpp", "Closing socket.");
     
-    // É¾³ı¼ÆÊ±Æ÷
+    // åˆ é™¤è®¡æ—¶å™¨
     xmpp_timed_handler_delete(conn, _disconnect_cleanup);
     
-    // ÉèÖÃ×´Ì¬
+    // è®¾ç½®çŠ¶æ€
     conn->state = XMPP_STATE_DISCONNECTED;
     
-    // ÊÍ·ÅÁ¬½Ó
+    // é‡Šæ”¾è¿æ¥
     bufferevent_free(conn->evbuffer);
     
-    // Í¨ÖªÍâ²¿Ó¦ÓÃ³ÌĞò
+    // é€šçŸ¥å¤–éƒ¨åº”ç”¨ç¨‹åº
     conn->conn_handler(conn, XMPP_CONN_DISCONNECT, conn->error,
                        conn->stream_error, conn->userdata);
 }
@@ -332,7 +332,7 @@ void conn_reset_stream(xmpp_conn_t *conn, xmpp_open_handler handler)
     parser_reset(conn->parser);
 }
 
-// ±Õ³¬Ê±timer»Øµ÷
+// é—­è¶…æ—¶timerå›è°ƒ
 static int _disconnect_cleanup(xmpp_conn_t *conn, void *userdata)
 {
     xmpp_debug(conn->ctx, "xmpp", "disconnection forced by cleanup timeout");
@@ -347,10 +347,10 @@ void xmpp_disconnect(xmpp_conn_t *conn)
         conn->state != XMPP_STATE_CONNECTED)
         return;
         
-    // ·¢ËÍÁ÷¹Ø±Õstanza
+    // å‘é€æµå…³é—­stanza
     xmpp_send_raw_string(conn, "</stream:stream>");
     
-    // ¿ªÆô¹Ø±Õ³¬Ê±timer
+    // å¼€å¯å…³é—­è¶…æ—¶timer
     handler_add_timed(conn, _disconnect_cleanup, RESPOND_TIMEOUT, NULL);
 }
 
@@ -358,7 +358,7 @@ void xmpp_send_raw_string(xmpp_conn_t *conn, const char *fmt, ...)
 {
     va_list ap;
     size_t len;
-    char buf[1024]; // Ä¬ÈÏ»º³å
+    char buf[1024]; // é»˜è®¤ç¼“å†²
     char *bigbuf;
     
     va_start(ap, fmt);
@@ -367,7 +367,7 @@ void xmpp_send_raw_string(xmpp_conn_t *conn, const char *fmt, ...)
     
     //
     if (len >= 1024) {
-        // ³¤¶È²»¹»ÖØĞÂÔÚ¶ÑÀïÃæ·ÖÅä
+        // é•¿åº¦ä¸å¤Ÿé‡æ–°åœ¨å †é‡Œé¢åˆ†é…
         len++;
         bigbuf = xmpp_alloc(conn->ctx, len);
         if (!bigbuf) {
@@ -394,7 +394,7 @@ void xmpp_send_raw(xmpp_conn_t *conn, const char *data, size_t len)
         return;
         
     if (bufferevent_write(conn->evbuffer, data, len) < 0) {
-        // Ğ´ÈëÊı¾İÊ§°Ü
+        // å†™å…¥æ•°æ®å¤±è´¥
         xmpp_error(conn->ctx, "conn", "Write to bufferevent failed.");
         conn_do_disconnect(conn);
     }
@@ -429,7 +429,7 @@ void conn_init_stream(xmpp_conn_t *conn)
                          XMPP_NS_STREAMS);
 }
 
-// »ñÈ¡Ö¸¶¨ÊôĞÔÖµ
+// è·å–æŒ‡å®šå±æ€§å€¼
 static char *_get_stream_attribute(char **attrs, char *name)
 {
     int i;
@@ -445,29 +445,29 @@ static void _handle_stream_start(char *name, char **attrs, void *userdata)
     xmpp_conn_t *conn = (xmpp_conn_t *)userdata;
     char *id;
     if (strcmp(name, "stream")) {
-        //·şÎñÆ÷·µ»ØÁË´íÎóµÄÁ÷¿ªÍ·
+        //æœåŠ¡å™¨è¿”å›äº†é”™è¯¯çš„æµå¼€å¤´
         xmpp_error(conn->ctx, "conn", "Server did not open valid stream.");
         conn_do_disconnect(conn);
         
     } else {
     
-        // ÊÍ·ÅÖ®Ç°µÄÁ÷ID×Ö·û´®
+        // é‡Šæ”¾ä¹‹å‰çš„æµIDå­—ç¬¦ä¸²
         if (conn->stream_id)
             xmpp_free(conn->ctx, conn->stream_id);
             
-        // »ñµÃÁ÷ID
+        // è·å¾—æµID
         id = _get_stream_attribute(attrs, "id");
         if (id)
             conn->stream_id = xmpp_strdup(conn->ctx, id);
             
-        // Ã»ÓĞÁ÷ID¶Ï¿ªÁ¬½Ó
+        // æ²¡æœ‰æµIDæ–­å¼€è¿æ¥
         if (!conn->stream_id) {
             xmpp_error(conn->ctx, "conn", "No stream id.");
             conn_do_disconnect(conn);
         }
     }
     
-    // Í¨ÖªÁ÷¿ªÆô
+    // é€šçŸ¥æµå¼€å¯
     conn->open_handler(conn);
 }
 
@@ -476,7 +476,7 @@ static void _handle_stream_end(char *name, void *userdata)
     xmpp_conn_t *conn = (xmpp_conn_t *)userdata;
     xmpp_debug(conn->ctx, "xmpp", "RECV: </stream:stream>");
     
-    // ¶Ï¿ªÁ¬½Ó
+    // æ–­å¼€è¿æ¥
     conn_do_disconnect(conn);
 }
 
@@ -491,7 +491,7 @@ static void _handle_stream_stanza(xmpp_stanza_t *stanza, void *userdata)
         xmpp_free(conn->ctx, buf);
     }
 #endif // DEBUG
-    // ´¥·¢handler
+    // è§¦å‘handler
     handler_fire_stanza(conn, stanza);
 }
 

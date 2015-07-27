@@ -1,5 +1,5 @@
 /*
-* stringutils.h ×Ö·û´®¹¤¾ß
+* stringutils.h å­—ç¬¦ä¸²å·¥å…·
 */
 #ifndef __IMCORE_STRINGUTILS_H
 #define __IMCORE_STRINGUTILS_H
@@ -7,7 +7,7 @@
 #include <string.h>
 #include <stdarg.h>
 
-// ×Ö·û´®±È½Ï
+// å­—ç¬¦ä¸²æ¯”è¾ƒ
 #define im_strcmp strcmp
 #define im_strncmp strncmp
 #if defined(_MSC_VER)
@@ -18,14 +18,14 @@
 #define im_strnicmp strncasecmp
 #endif
 
-// ³¤¶È¼ÆËã
+// é•¿åº¦è®¡ç®—
 #define im_strnlen strnlen
 #define im_strlen strlen
 
-// ×Ö·û´®¸´ÖÆ
+// å­—ç¬¦ä¸²å¤åˆ¶
 char *im_strndup(const char *src, size_t maxlen);
 
-// ¸ñÊ½×Ö·û´®´òÓ¡
+// æ ¼å¼å­—ç¬¦ä¸²æ‰“å°
 int im_vsnprintf(char *dest, size_t size, const char *format, va_list ap);
 int im_snprintf(char *dest, size_t size, const char *format, ...);
 
