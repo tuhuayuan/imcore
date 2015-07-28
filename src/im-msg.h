@@ -33,7 +33,7 @@ typedef void(*im_msg_send_imp)(im_msg_t *msg, im_conn_send_cb cb, bool receipt, 
  */
 struct im_msg {
     /** @brief	64位整形唯一id. */
-    uint64_t id;
+    char *id;
     /** @brief	消息来源. */
     char *from;
     /** @brief	消息目的地. */
@@ -91,10 +91,10 @@ im_msg_t *im_msg_new(im_conn_t *conn,
  * @param	send_imp		发送函数实现指针
  */
 
-void im_msg_init(im_msg_t *msg, im_conn_t *conn,
-                 const char *from, const char *to, const char *type,
-                 im_msg_free_imp free_imp,
-                 im_msg_send_imp send_imp);
+int im_msg_init(im_msg_t *msg, im_conn_t *conn,
+                const char *from, const char *to, const char *type,
+                im_msg_free_imp free_imp,
+                im_msg_send_imp send_imp);
 
 /**
  * @fn	void im_msg_destroy(im_msg_t *msg);

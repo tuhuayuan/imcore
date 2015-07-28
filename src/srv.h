@@ -5,7 +5,6 @@
 #define __IMCORE_SRV_H__
 
 #include "common.h"
-#include "sock.h"
 
 // SRV记录查询
 int im_srv_lookup(const char *service, const char *proto, const char *domain,

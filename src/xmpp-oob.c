@@ -5,3 +5,9 @@
  */
 #include "xmpp-oob.h"
 
+struct xmpp_oob {
+    char *id;
+    char *url;
+    char *desc;
+};
+

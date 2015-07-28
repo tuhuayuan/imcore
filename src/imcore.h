@@ -96,11 +96,10 @@ IMCORE_API bool im_init();
  */
 IMCORE_API void im_destroy();
 
-typedef void(*im_conn_state_cb)(im_conn_t *conn, im_conn_state state, void *userdate);
+typedef void(*im_conn_state_cb)(im_conn_t *conn, im_conn_state state, int error, void *userdate);
 typedef void(*im_conn_recive_cb)(im_conn_t *conn, im_msg_t *msg, void *userdate);
 typedef void(*im_conn_send_cb)(im_msg_t *msg, int error, void *userdata);
 typedef void(*im_file_download_cb)(int error, void *userdata);
-
 typedef void(*im_call_state_cb)(im_voicecall_ctx_t *ctx, im_call_state state, void *userdata);
 typedef int(*im_voicecall_read_cb)(im_voicecall_ctx_t *ctx,
                                    const char *inbuf, size_t *len, void *userdata);
@@ -131,17 +130,34 @@ IMCORE_API im_conn_t *im_conn_new(const char *host,
                                   im_conn_recive_cb msgcb,
                                   void *userdate);
 
+/**
+ * @fn	IMCORE_API int im_conn_open(im_conn_t *conn);
+ *
+ * @brief	发起IM连接, 方法立即返回. 客户端在state, recive回调
+ * 			里面处理状态改变, 以及消息.
+ *
+ * @author	Huayuan
+ * @date	2015/7/28
+ *
+ * @param [in]	conn	要启动的连接
+ *
+ * @return	An int.
+ */
 IMCORE_API int im_conn_open(im_conn_t *conn);
+
+
 IMCORE_API int im_conn_close(im_conn_t *conn);
+IMCORE_API void im_conn_free(im_conn_t *conn);
 IMCORE_API int im_msg_file_download(const char *remoteurl, const char *localurl,
                                     const char *secret, im_file_download_cb cb, void *userdata);
 IMCORE_API uint64_t im_msg_get_id(im_msg_t *msg);
 IMCORE_API char *im_msg_get_from(im_msg_t *msg);
 IMCORE_API char *im_msg_get_to(im_msg_t *msg);
 IMCORE_API char *im_msg_get_type(im_msg_t *msg);
+IMCORE_API bool *im_msg_require_receipt(im_msg_t *msg);
 IMCORE_API im_conn_t *im_msg_get_conn(im_msg_t *msg);
 IMCORE_API im_msg_t *im_msg_clone(im_msg_t *msg);
-IMCORE_API int im_msg_send(im_msg_t *msg, im_conn_send_cb cb, bool receipt, void *userdata);
+IMCORE_API int im_msg_send(im_msg_t *msg, im_conn_send_cb cb, bool require, void *userdata);
 IMCORE_API int im_msg_free(im_msg_t *msg);
 IMCORE_API im_msg_t *im_msg_text_new(im_conn_t *conn, const char *to, const char *msg, size_t len);
 IMCORE_API int im_msg_text_read(im_msg_t *textmsg, char *buff, size_t maxleng);

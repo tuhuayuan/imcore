@@ -4,13 +4,15 @@
  * @brief	imcore class.
  */
 #include "imcore.h"
+#include "im-thread.h"
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
+#include <event2/event.h>
 
 #include "common.h"
-#include "im-thread.h"
+#include "xmpp.h"
 #include "mm.h"
 
 static void _mem_leak_cb(void *p, size_t s, const char *file, uint64_t line, void *mem_userdata,
